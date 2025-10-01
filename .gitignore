@@ -39,3 +39,7 @@ yarn-error.log*
 dist/
 build/
 /server/.env
+
+server_backup/node/
+node_modules/
+server_backup/.env
