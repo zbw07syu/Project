@@ -3,8 +3,12 @@
 # Start the Question Generator Server
 echo "Starting Question Generator Server..."
 
-# Set up Node.js path
-export PATH="/Users/apple/Desktop/Project/node/bin:$PATH"
+# Check if Node.js is installed
+if ! command -v node &> /dev/null; then
+    echo "Error: Node.js is not installed"
+    echo "Please install Node.js from https://nodejs.org/"
+    exit 1
+fi
 
 # Change to server directory
 cd /Users/apple/Desktop/Project/server
