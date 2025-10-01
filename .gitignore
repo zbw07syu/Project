@@ -6,6 +6,9 @@ server/.env
 node_modules/
 server/node_modules/
 
+# Node.js runtime (local installation - should not be in repo)
+node/
+
 # System files
 .DS_Store
 .DS_Store?
