@@ -29,9 +29,15 @@
     <header class="app-header">
       <h1>Classroom Question Lists</h1>
 
-      <div class="audio-controls" title="Background music controls">
-        <button id="audioToggle" aria-label="Toggle mute">🔈</button>
-        <input id="audioVolume" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume" />
+      <div class="header-controls">
+        <div class="data-controls">
+          <button id="exportDataBtn" class="ghost" title="Export all question lists">💾 Export</button>
+          <button id="importDataBtn" class="ghost" title="Import question lists">📥 Import</button>
+        </div>
+        <div class="audio-controls" title="Background music controls">
+          <button id="audioToggle" aria-label="Toggle mute">🔈</button>
+          <input id="audioVolume" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume" />
+        </div>
       </div>
     </header>
 

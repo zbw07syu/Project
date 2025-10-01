@@ -25,6 +25,8 @@
 */
 
 (function () {
+  console.log('✅ Question List Manager - app.js loaded successfully');
+  
   // ----- Utilities -----
   const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -773,6 +775,72 @@
     });
 
     $('#searchInput').addEventListener('input', renderHome);
+
+    // Export/Import data
+    $('#exportDataBtn').addEventListener('click', () => {
+      const lists = loadFromStorage();
+      if (lists.length === 0) {
+        toast('No question lists to export');
+        return;
+      }
+      const dataStr = JSON.stringify(lists, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `question-lists-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('✅ Question lists exported!');
+    });
+
+    $('#importDataBtn').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            if (!Array.isArray(imported)) {
+              toast('❌ Invalid file format');
+              return;
+            }
+            const currentLists = loadFromStorage();
+            const merged = [...currentLists];
+            let addedCount = 0;
+            
+            imported.forEach(list => {
+              const normalized = normalizeList(list);
+              if (normalized) {
+                // Check if list with same ID already exists
+                const existingIndex = merged.findIndex(l => l.id === normalized.id);
+                if (existingIndex >= 0) {
+                  // Replace existing
+                  merged[existingIndex] = normalized;
+                } else {
+                  // Add new
+                  merged.push(normalized);
+                  addedCount++;
+                }
+              }
+            });
+            
+            saveToStorage(merged);
+            renderHome();
+            toast(`✅ Imported ${addedCount} new list(s), updated ${imported.length - addedCount}`);
+          } catch (err) {
+            console.error('Import error:', err);
+            toast('❌ Failed to import file');
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    });
 
     // Modal 1
     $('#modal1Cancel').addEventListener('click', closeModal1);
