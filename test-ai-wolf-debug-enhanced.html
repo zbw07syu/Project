@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AI Wolf Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .debug-panel {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.good { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .log-entry {
+            font-family: monospace;
+            font-size: 12px;
+            padding: 2px 5px;
+            margin: 1px 0;
+            border-left: 3px solid #ccc;
+        }
+        .log-entry.ai { border-left-color: #007bff; }
+        .log-entry.modal { border-left-color: #28a745; }
+        .log-entry.error { border-left-color: #dc3545; }
+        .log-entry.warning { border-left-color: #ffc107; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .game-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .state-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .state-item {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .state-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .state-value {
+            color: #007bff;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐺 Enhanced AI Wolf Debug Test</h1>
+    
+    <div class="debug-panel">
+        <h2>🎮 Game Controls</h2>
+        <div class="controls">
+            <button class="btn-primary" onclick="loadGame()">🔄 Load Game</button>
+            <button class="btn-success" onclick="startMonitoring()">▶️ Start Monitoring</button>
+            <button class="btn-warning" onclick="stopMonitoring()">⏸️ Stop Monitoring</button>
+            <button class="btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
+            <button class="btn-primary" onclick="exportLogs()">💾 Export Logs</button>
+            <button class="btn-warning" onclick="forceAIAction()">🤖 Force AI Action</button>
+            <button class="btn-danger" onclick="resetAIState()">🔧 Reset AI State</button>
+        </div>
+    </div>
+
+    <div class="debug-panel">
+        <h2>📊 Real-time Game State</h2>
+        <div id="gameState" class="state-display">
+            <div class="state-item">
+                <div class="state-label">Modal State:</div>
+                <div class="state-value" id="modalState">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">Current Player:</div>
+                <div class="state-value" id="currentPlayer">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">Is Dice Turn:</div>
+                <div class="state-value" id="isDiceTurn">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">AI Action In Progress:</div>
+                <div class="state-value" id="aiActionInProgress">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">AI Action Scheduled:</div>
+                <div class="state-value" id="aiActionScheduled">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">AI Queue Length:</div>
+                <div class="state-value" id="aiQueueLength">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">Last Modal Close:</div>
+                <div class="state-value" id="lastModalClose">Unknown</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">Pending AI Player:</div>
+                <div class="state-value" id="pendingAIPlayer">Unknown</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="debug-panel">
+        <h2>🔍 Issue Detection</h2>
+        <div id="issueDetection">
+            <div class="status good">System ready for monitoring</div>
+        </div>
+    </div>
+
+    <div class="debug-panel">
+        <h2>📝 Debug Logs</h2>
+        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f8f9fa;">
+            <div id="debugLogs"></div>
+        </div>
+    </div>
+
+    <div class="debug-panel">
+        <h2>🎮 Game Window</h2>
+        <iframe id="gameFrame" class="game-frame" src="Games/RunRunRabbit/index.html"></iframe>
+    </div>
+
+    <script>
+        let monitoringInterval = null;
+        let gameWindow = null;
+        let logs = [];
+        let issuePatterns = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            logs.push({ timestamp, message, type });
+            
+            const logDiv = document.getElementById('debugLogs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = entry;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(entry);
+        }
+
+        function loadGame() {
+            const frame = document.getElementById('gameFrame');
+            frame.src = frame.src; // Reload
+            log('🔄 Game reloaded', 'info');
+            
+            setTimeout(() => {
+                gameWindow = frame.contentWindow;
+                log('🎮 Game window reference updated', 'info');
+            }, 1000);
+        }
+
+        function updateGameState() {
+            if (!gameWindow) return;
+
+            try {
+                const state = {
+                    modalState: gameWindow.modalState || 'Unknown',
+                    currentPlayer: gameWindow.currentPlayer?.name || 'None',
+                    isDiceTurn: gameWindow.isDiceTurn || false,
+                    aiActionInProgress: gameWindow.aiActionInProgress || false,
+                    aiActionScheduled: gameWindow.aiActionScheduled || false,
+                    aiQueueLength: gameWindow.aiActionQueue?.length || 0,
+                    lastModalClose: gameWindow.lastModalCloseTime ? 
+                        new Date(gameWindow.lastModalCloseTime).toLocaleTimeString() : 'Never',
+                    pendingAIPlayer: gameWindow.pendingAIPlayer?.name || 'None'
+                };
+
+                // Update display
+                Object.keys(state).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.textContent = state[key];
+                    }
+                });
+
+                // Issue detection
+                detectIssues(state);
+
+            } catch (error) {
+                log(`❌ Error updating game state: ${error.message}`, 'error');
+            }
+        }
+
+        function detectIssues(state) {
+            const issues = [];
+            const issueDiv = document.getElementById('issueDetection');
+
+            // Check for stuck AI wolf
+            if (state.currentPlayer === 'wolf' && 
+                state.isDiceTurn && 
+                !state.aiActionInProgress && 
+                !state.aiActionScheduled &&
+                state.modalState === 'closed') {
+                
+                const timeSinceModalClose = Date.now() - (gameWindow?.lastModalCloseTime || 0);
+                if (timeSinceModalClose > 2000) {
+                    issues.push({
+                        type: 'error',
+                        message: `🚨 STUCK AI WOLF DETECTED! Wolf should roll but isn't. Time since modal close: ${Math.round(timeSinceModalClose/1000)}s`
+                    });
+                }
+            }
+
+            // Check for modal state issues
+            if (state.modalState !== 'closed' && state.modalState !== 'open') {
+                issues.push({
+                    type: 'warning',
+                    message: `⚠️ Modal in transitional state: ${state.modalState}`
+                });
+            }
+
+            // Check for AI queue backup
+            if (state.aiQueueLength > 3) {
+                issues.push({
+                    type: 'warning',
+                    message: `⚠️ AI action queue backing up: ${state.aiQueueLength} items`
+                });
+            }
+
+            // Check for conflicting AI states
+            if (state.aiActionInProgress && state.aiActionScheduled) {
+                issues.push({
+                    type: 'error',
+                    message: `🚨 Conflicting AI states: both inProgress and scheduled are true`
+                });
+            }
+
+            // Update display
+            issueDiv.innerHTML = '';
+            if (issues.length === 0) {
+                issueDiv.innerHTML = '<div class="status good">✅ No issues detected</div>';
+            } else {
+                issues.forEach(issue => {
+                    const div = document.createElement('div');
+                    div.className = `status ${issue.type}`;
+                    div.textContent = issue.message;
+                    issueDiv.appendChild(div);
+                    
+                    // Log critical issues
+                    if (issue.type === 'error') {
+                        log(issue.message, 'error');
+                    }
+                });
+            }
+        }
+
+        function startMonitoring() {
+            if (monitoringInterval) return;
+            
+            monitoringInterval = setInterval(() => {
+                updateGameState();
+            }, 500); // Update every 500ms
+            
+            log('▶️ Monitoring started', 'info');
+        }
+
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                log('⏸️ Monitoring stopped', 'info');
+            }
+        }
+
+        function clearLogs() {
+            logs = [];
+            document.getElementById('debugLogs').innerHTML = '';
+            log('🗑️ Logs cleared', 'info');
+        }
+
+        function exportLogs() {
+            const logText = logs.map(log => `[${log.timestamp}] ${log.message}`).join('\n');
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-wolf-debug-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            log('💾 Logs exported', 'info');
+        }
+
+        function forceAIAction() {
+            if (!gameWindow) {
+                log('❌ No game window available', 'error');
+                return;
+            }
+
+            try {
+                const wolfPlayer = gameWindow.players?.find(p => p.name === 'wolf');
+                if (wolfPlayer && gameWindow.scheduleAIAction) {
+                    gameWindow.scheduleAIAction(wolfPlayer, 'debug-force-action', 100);
+                    log('🤖 Forced AI action for wolf', 'ai');
+                } else {
+                    log('❌ Could not force AI action - wolf player or scheduleAIAction not found', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error forcing AI action: ${error.message}`, 'error');
+            }
+        }
+
+        function resetAIState() {
+            if (!gameWindow) {
+                log('❌ No game window available', 'error');
+                return;
+            }
+
+            try {
+                if (gameWindow.resetAIState) {
+                    gameWindow.resetAIState();
+                    log('🔧 AI state reset via resetAIState()', 'ai');
+                } else {
+                    // Manual reset
+                    gameWindow.aiActionInProgress = false;
+                    gameWindow.aiActionScheduled = false;
+                    if (gameWindow.aiActionQueue) {
+                        gameWindow.aiActionQueue.length = 0;
+                    }
+                    gameWindow.pendingAIPlayer = null;
+                    log('🔧 AI state manually reset', 'ai');
+                }
+            } catch (error) {
+                log(`❌ Error resetting AI state: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-start monitoring when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                gameWindow = document.getElementById('gameFrame').contentWindow;
+                startMonitoring();
+                log('🚀 Debug system initialized', 'info');
+            }, 2000);
+        });
+
+        // Listen for game events
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type) {
+                log(`📨 Game event: ${event.data.type} - ${JSON.stringify(event.data)}`, 'modal');
+            }
+        });
+    </script>
+</body>
+</html>

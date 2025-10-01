@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tornado Game</title>
+
+    <!-- Font Loading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fontfaceobserver/2.1.0/fontfaceobserver.standalone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+    </noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+      /* Strobe overlay sits above confetti */
+      #strobeOverlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2100;
+        background: rgba(255, 255, 255, 0.85);
+        opacity: 0;
+        transition: opacity 0.12s ease;
+        visibility: hidden;
+      }
+      #strobeOverlay.is-active {
+        visibility: visible;
+      }
+      #strobeOverlay.flash {
+        opacity: 1;
+      }
+      .modal {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2200;
+        opacity: 0;
+        pointer-events: none;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+      }
+      .modal.is-open {
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+      }
+      .modalContent {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 300px;
+        max-width: 80%;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-family: 'Bangers', cursive;
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+      }
+      .modal.show .modalContent { transform: translateY(0); }
+      .vpBtn {
+        font-family: 'Bangers', cursive;
+        font-size: 24px;
+        width: 100px;
+        height: 50px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        background-color: #ffd54a;
+        color: #000;
+        transition: background-color 0.2s;
+      }
+      .vpBtn:hover { background-color: #ffca28; }
+      .modalButtons, .modalActions {
+        display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      }
+      #humanTeamOptions label { display: block; margin: 6px 0; }
+    </style>
+    <canvas id="confettiCanvas" class="hidden" aria-hidden="true"></canvas>
+    <div id="strobeOverlay" class="hidden" aria-hidden="true"></div>
+</head>
+<body>
+    <h1 id="gameTitle">Tornado</h1>
+
+    <div id="gameContainer">
+        <!-- Left Panel -->
+        <div id="leftPanel">
+            <button onclick="toggleMusic()">Mute/Unmute Music</button>
+            <button onclick="restartGame()">Restart</button>
+            <button id="rulesBtn">Rules</button>
+            <label style="display:block; margin-top:8px; font-family: 'Bangers', cursive; color:#fff;">
+              AI Speed
+              <input id="aiSpeed" type="range" min="0.25" max="2" step="0.25" value="1" style="width:140px; vertical-align:middle;">
+              <span id="aiSpeedLabel">1x</span>
+            </label>
+            <div id="diceResult"></div>
+        </div>
+
+        <!-- Grid + Questions -->
+        <div id="gridContainer">
+            <div id="grid"></div>
+            <div id="questionArea">
+                <div id="question">🎲 Roll the dice to begin the game!</div>
+                <div id="answer"></div>
+                <div id="controls"></div>
+            </div>
+        </div>
+
+        <!-- Score Panel -->
+        <div id="scorePanel">
+            <ul id="scores"></ul>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="bgMusic" src="sounds/ShaftThemeChiptune.mp3" loop></audio>
+    <audio id="correctSfx" src="sounds/correct.wav"></audio>
+    <audio id="incorrectSfx" src="sounds/incorrect.wav"></audio>
+    <audio id="tornadoSfx" src="sounds/tornado.wav"></audio>
+    <audio id="diceSfx" src="sounds/dice.wav"></audio>
+    <audio id="passSfx" src="sounds/meow.wav"></audio>
+    <audio id="victorySfx" src="sounds/Celebrationchiptune.mp3"></audio>
+
+<!-- Rules panel -->
+<div id="rulesPanel">
+  <div id="rulesContent">
+    <h2>1. Setup</h2>
+    <ul>
+      <li>There are 3 or 4 teams. Select how many are human; the rest are AI.</li>
+      <li>Each team rolls a dice. The team with the highest number goes first.</li>
+    </ul>
+
+    <h2>2. Taking Turns</h2>
+    <ul>
+      <li>Pick a number on the grid.</li>
+      <li>If it’s a question:
+        <ul>
+          <li>Answer correctly → gain points and choose another number or pass turn.</li>
+          <li>Answer incorrectly → turn ends, next team plays.</li>
+        </ul>
+      </li>
+      <li>If it’s a tornado:
+        <ul>
+          <li>Lose all points for the game, and turn ends immediately.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>3. Ending the Game</h2>
+    <ul>
+      <li>When all squares are revealed, the game is over.</li>
+      <li>The team with the most points wins!</li>
+    </ul>
+  </div>
+  <button id="closeRulesBtn">Close</button>
+</div>
+
+<!-- Team Selection Modals -->
+<div id="teamCountModal" class="modal">
+  <div class="modalContent">
+    <h2>Select number of teams</h2>
+    <div class="modalButtons">
+      <button class="vpBtn team-count-btn" data-teams="2">2</button>
+      <button class="vpBtn team-count-btn" data-teams="3">3</button>
+      <button class="vpBtn team-count-btn" data-teams="4">4</button>
+    </div>
+  </div>
+</div>
+
+<div id="humanTeamModal" class="modal">
+  <div class="modalContent">
+    <h2>Select number of human teams</h2>
+    <div id="humanTeamOptions" class="modalButtons"></div>
+    <div class="modalActions">
+      <button class="vpBtn" id="humanBack">Back</button>
+      <button class="vpBtn" id="humanStart" disabled>Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game JS -->
+<script src="../shared-modal.js"></script>
+<script src="game.js"></script>
+
+<!-- Font loading fix -->
+<script>
+document.body.style.opacity = 0; // hide initially
+
+const font = new FontFaceObserver('Bangers');
+font.load().then(() => {
+  document.body.style.opacity = 1; // show page when font is ready
+}).catch(() => {
+  document.body.style.opacity = 1; // fallback
+});
+</script>
+</body>
+</html>

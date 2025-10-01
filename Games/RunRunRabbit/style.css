@@ -1,0 +1,489 @@
+/* General */
+@font-face {
+  font-family: 'Bangers';
+  src: url('fonts/Bangers-Regular.ttf') format('ttf');
+  font-display: block; /* ensures text waits for font to load */
+}
+
+/* Team Selection Buttons */
+.teamOption {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.teamNumber {
+  font-family: 'Bangers', cursive;
+  font-size: 32px;
+  font-weight: bold;
+  min-width: 30px; /* keeps numbers aligned */
+  text-align: right;
+  margin-right: 10px; /* space between number and button */
+}
+
+.teamBtn {
+  display: flex;
+  justify-content: center; /* centers the icons inside */
+  gap: 5px;
+  padding: 10px;
+  background-color: #f4f4f4;
+  border: 3px solid #333;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+
+  width: 220px; /* fixed width for all buttons */
+  box-sizing: border-box; /* includes padding in width */
+}
+
+.teamBtn:hover {
+  background-color: #ffe066;
+  transform: scale(1.05);
+}
+
+.teamIcon {
+  width: 40px;
+  height: 40px;
+}
+
+
+/* Modal background overlay */
+.modal {
+  display: flex;               
+  justify-content: center;     
+  align-items: center;         
+  position: fixed;             
+  top: 0;                      
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5); 
+  z-index: 1000;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal content box */
+.modalContent {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;                 
+  max-width: 80%;               
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  font-family: 'Bangers', cursive;  /* Bangers font */
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.modal.show .modalContent {
+  transform: translateY(0);
+}
+
+.modalContent h2 {
+  margin-top: 0;
+  font-size: 1.5em;
+}
+
+.modalContent p {
+  margin: 15px 0;
+  font-size: 1em;
+}
+
+/* Generic modal choice buttons (used by victory points and human-count modals) */
+.vpBtn {
+  font-family: 'Bangers', cursive; /* Bangers font */
+  font-size: 24px;
+  width: 100px;        /* fixed width */
+  height: 50px;        /* fixed height */
+  margin: 5px;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: #ffd54a;
+  color: #000;
+  transition: background-color 0.2s;
+  z-index: 1010; /* slightly higher than teamModal */
+}
+
+.vpBtn:hover {
+  background-color: #ffca28;
+}
+
+
+body {
+  font-family: 'Bangers', cursive;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;   /* keep column for title + mainContainer */
+  align-items: center;      /* center horizontally */
+  background: url('images/rabbitvswolfbackground.jpg') no-repeat center center fixed;
+  background-size: cover;
+  z-index: -1;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#confettiCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+#confettiCanvas.show {
+  opacity: 1;
+}
+
+#strobeOverlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2100;
+  background: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+#strobeOverlay.flash {
+  opacity: 1;
+}
+
+/* Make html and body take the full viewport */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* optional: prevents scrollbars */
+}
+
+h1#gameTitle {
+  margin: 16px 0;
+  font-size: 48px;
+  text-align: center;
+}
+
+/* Main container: left, center, right */
+#mainContainer {
+  display: flex;
+  flex-direction: row;       /* side-by-side panels */
+  align-items: flex-start;   /* align top of panels */
+  justify-content: center;   /* center horizontally in page */
+  gap: 24px;                 /* space between panels */
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+}
+
+/* Canvas fills available space */
+canvas {
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  position: relative;
+  z-index: 1;
+}
+
+#gridContainer {
+  display: flex;
+  flex-direction: column;   /* stack title above grid */
+  align-items: center;      /* center horizontally */
+  justify-content: center;  /* optional: center vertically if needed */
+  gap: 16px;                /* space between title and grid */
+}
+
+#message {
+  position: relative;
+  min-height: 24px;
+  font-size: 18px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+#leftPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-right: 16px;
+}
+
+#leftPanel button:not(.pssBtn) {
+  width: 160px;              /* match scoreboard li width */
+  min-height: 60px;          /* match scoreboard li height */
+  padding: 12px;             /* adjust to fit text nicely */
+  font-family: 'Bangers', cursive;
+  font-size: 24px;           /* match scoreboard font size */
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid #222;
+  border-radius: 8px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+/* Hover effect */
+#leftPanel button:not(.pssBtn):hover {
+  transform: scale(1.05);
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
+}
+
+#pssPanel {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* PSS Buttons */
+.pssBtn {
+  width: 60px;              /* button size */
+  height: 60px;
+  padding: 0;               /* remove extra padding */
+  border: 2px solid #222;
+  border-radius: 8px;       /* rounded corners */
+  background-color: #fff;   
+  cursor: pointer;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.1s, box-shadow 0.1s;
+  display: inline-block;
+}
+
+.pssBtn img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* fill button fully */
+  pointer-events: none;     /* click goes to button */
+  border-radius: 6px;       /* match button rounding */
+}
+
+/* Hover effect */
+.pssBtn:hover {
+  transform: scale(1.1);             /* slight grow */
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
+}
+
+#leftPanel button {
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Center panel */
+#centerPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#gameCanvas {
+  border: 2px solid #222;
+  background: #fff;
+}
+
+#questionArea {
+  background-color: #fff;
+  width: 480px;            /* adjust to match your design */
+  height: 180px;           /* fixed height */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;  /* evenly distribute children */
+  overflow: hidden;                /* no expansion */
+}
+
+/* Each section takes up 1/3 of the height */
+#question, #answer, #controls {
+  flex: 1 0 0;                /* equal height share */
+  width: 100%;
+  display: flex;
+  justify-content: center;    /* center horizontally */
+  align-items: center;        /* center vertically */
+  text-align: center;
+  padding: 4px;
+  font-size: 20px;            /* increase base size */
+  font-weight: bold;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.2;
+}
+
+/* Container for multiple-choice buttons */
+.controlsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;         /* tighter spacing so 4 fit easily */
+  width: 100%;
+}
+
+/* Shared button styling */
+.controlsBtn {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(12px, 2vw, 16px); /* shrink as needed */
+  cursor: pointer;
+  border: 2px solid #222;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.1s, box-shadow 0.1s;
+
+  width: 100px;     /* fixed width so all are equal */
+  height: 36px;     /* fixed height */
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Left panel buttons hover (exclude PSS) */
+#leftPanel button:not(.pssBtn):hover {
+  background-color: #ffd54a;
+  color: #000;
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+/* Hover effect for CONTROLS buttons */
+.controlsBtn:hover {
+  background-color: #ffd54a;
+  color: #000;
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+.pssBtn {
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: 2px solid #222;
+  border-radius: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  display: inline-block;
+  overflow: hidden;
+
+  /* Prevent image scaling on border change */
+  box-sizing: border-box;  
+}
+
+.pssBtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  border-radius: 6px;
+  box-sizing: border-box;  /* ensures border/padding don't shrink image */
+}
+
+.pssBtn:hover {
+  border-color: yellow;   /* only border changes */
+  box-shadow: 0 0 10px rgba(255,255,0,0.6); /* optional glow */
+  transform: none;        /* no scaling */
+}
+
+.pssBtn:disabled {
+  opacity: 0.5;          /* visually greyed out */
+  cursor: not-allowed;   /* shows the forbidden cursor */
+  transform: none;       /* prevent hover scaling */
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.1); /* subtle shadow */
+}
+
+/* Right panel / scoreboard */
+#rightPanel {
+  width: 160px;
+}
+
+#scores {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#scores li {
+  padding: 12px;           /* a bit more space */
+  margin-bottom: 8px;
+  border: 2px solid #222;
+  background: #fff;
+  font-size: 24px;         /* increased from 18px */
+  text-align: center;
+  font-weight: normal;      /* normal for non-highlighted */
+}
+
+#scores li.currentTurn {
+  background-color: #90ee90 !important;
+  font-weight: bold;
+  border-radius: 8px;
+  font-size: 24px;         /* same as base so text doesn't shrink */
+}
+
+#scores li.active {
+  background: #a5d6a7;
+  font-weight: bold;
+}
+
+.currentTurn {
+  background-color: #ffd54a;  /* yellow highlight */
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+#rulesPanel {
+  position: fixed;
+  top: 50px;
+  left: -300px;        /* panel width + padding/border */
+  width: 280px;
+  padding: 10px;
+  border: 2px solid #333;
+  background: #fff;
+  box-sizing: border-box;  /* include padding & border in width */
+  box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+  transition: left 0.3s ease;
+  z-index: 1000;
+}
+
+#rulesPanel.show {
+  left: 10px;          /* when visible */
+}
+
+#rulesPanel button.closeBtn {
+  font-family: 'Bangers', cursive; /* match game font */
+  font-size: 20px;
+  font-weight: bold;
+  background-color: #fff;
+  border: 2px solid #222;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+#rulesPanel button.closeBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
+  background-color: #ffb6c1; /* light pink hover (matches question box) */
+}

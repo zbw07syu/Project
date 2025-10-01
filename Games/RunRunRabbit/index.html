@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+  body { visibility: hidden; }
+</style>
+  <meta charset="UTF-8" />
+  <title>Rabbit vs Wolf</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="confettiCanvas" class="hidden" aria-hidden="true"></canvas>
+<div id="strobeOverlay" class="hidden" aria-hidden="true"></div>
+<div id="teamModal" class="modal">
+  <div class="modalContent">
+    <h2>Select Number of Teams</h2>
+    <p>Choose how many teams will play:</p>
+
+    <div class="teamOption">
+      <span class="teamNumber">2</span>
+      <button class="teamBtn" data-teams="2">
+        <img src="images/rabbit.png" alt="Rabbit" class="teamIcon">
+        <img src="images/wolf.png" alt="Wolf" class="teamIcon">
+      </button>
+    </div>
+
+    <div class="teamOption">
+      <span class="teamNumber">3</span>
+      <button class="teamBtn" data-teams="3">
+        <img src="images/rabbit.png" alt="Rabbit" class="teamIcon">
+        <img src="images/rabbit.png" alt="Rabbit" class="teamIcon">
+        <img src="images/wolf.png" alt="Wolf" class="teamIcon">
+      </button>
+    </div>
+
+    <div class="teamOption">
+      <span class="teamNumber">4</span>
+      <button class="teamBtn" data-teams="4">
+        <img src="images/rabbit.png" alt="Rabbit" class="teamIcon">
+        <img src="images/rabbit.png" alt="Rabbit" class="teamIcon">
+        <img src="images/rabbit.png" alt="Rabbit" class="teamIcon">
+        <img src="images/wolf.png" alt="Wolf" class="teamIcon">
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- New: Number of Human Teams Modal -->
+<div id="humanTeamsModal" class="modal">
+  <div class="modalContent">
+    <h2>Number of Human Teams</h2>
+    <p>Select how many teams are controlled by humans:</p>
+    <div id="humanTeamOptions"></div>
+  </div>
+</div>
+
+<!-- New: Player Selection Modal -->
+<div id="playerSelectModal" class="modal">
+  <div class="modalContent">
+    <h2>Player Selection</h2>
+    <p id="playerSelectMsg">Select players for human control</p>
+    <div id="playerOptions" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <button id="playerConfirmBtn" class="vpBtn" disabled>Confirm</button>
+  </div>
+</div>
+
+<div id="victoryModal" class="modal">
+  <div class="modalContent">
+    <h2>Set Victory Points</h2>
+    <p>Choose how many points are needed to win:</p>
+    <button class="vpBtn" data-points="3">3</button>
+    <button class="vpBtn" data-points="5">5</button>
+    <button class="vpBtn" data-points="10">10</button>
+  </div>
+</div>
+    <div id="rulesPanel">
+  <h2>Game Rules</h2>
+    <p><strong>Objective</strong><br>
+     🐇 Rabbit: Escape from the grid to the yellow safety zone.<br>
+     🐺 Wolf: Land on the same square as the rabbit to catch it!</p>
+
+  <p><strong>Gameplay</strong><br>
+     1. Play paper-scissors-stone. The loser answers a question.<br>
+     2. Wolf rolls the dice and moves first. Then rabbit rolls the dice (rabbit can move one extra square).</p>
+    <button id="closeRulesBtn" class="closeBtn">Close</button>
+</div>
+
+  <h1 id="gameTitle">Run, Run, Rabbit!</h1>
+
+  <div id="mainContainer">
+
+    <div id="leftPanel">
+  <button id="muteBtn">Mute/Unmute Music</button>
+  <button id="rulesBtn">Rules</button>
+  <button id="restartBtn">Restart</button>
+  <label style="display:block; margin-top:8px; font-family: 'Bangers', cursive; color:#fff;">
+    AI Speed
+    <input id="aiSpeed" type="range" min="0.25" max="2" step="0.25" value="1" style="width:140px; vertical-align:middle;">
+    <span id="aiSpeedLabel" style="color:#fff; display:inline-block; min-width: 36px; text-align: right;">1x</span>
+  </label>
+
+  <!-- Paper, Scissors, Stone buttons (relocated dynamically into controls) -->
+  <div id="pssPanel" style="display:none;">
+    <button class="pssBtn" data-move="rock">
+      <img src="images/rock.jpg" alt="Rock" width="40">
+    </button>
+    <button class="pssBtn" data-move="paper">
+      <img src="images/paper.jpg" alt="Paper" width="40">
+    </button>
+    <button class="pssBtn" data-move="scissors">
+      <img src="images/scissors.jpg" alt="Scissors" width="40">
+    </button>
+  </div>
+
+  <!-- Roll Dice button (relocated dynamically into controls) -->
+  <button id="rollDiceBtn" class="controlsBtn" style="display:none;">Roll Dice</button>
+</div>
+
+    <!-- Center Panel -->
+    <div id="centerPanel">
+      <div id="gridContainer"></div>
+      <canvas id="gameCanvas" width="450" height="450"></canvas>
+      <div id="questionArea">
+        <div id="question">Play paper-scissors-stone to start!</div>
+    <div id="answer"></div>
+    <div id="controls"></div>
+  </div>
+</div>
+
+<!-- Right Panel -->
+<div id="rightPanel">
+<ul id="scores">
+  <li id="rabbitScore" class="scoreboard-item">🐇 Rabbit: 0</li>
+  <li id="wolfScore" class="scoreboard-item">🐺 Wolf: 0</li>
+  <li id="blueRabbitScore" class="scoreboard-item" style="display: none;">🔵 Rabbit: 0</li>
+  <li id="redRabbitScore" class="scoreboard-item" style="display: none;">🔴 Rabbit: 0</li>
+  <li id="blackRabbitScore" class="scoreboard-item" style="display: none;">⚫ Rabbit: 0</li>
+</ul>
+</div>
+  
+</div>
+
+  <!-- Audio -->
+  <audio id="bgMusic" src="peter-and-the-wolf-chiptune.mp3" loop></audio>
+
+    <script>
+    document.fonts.load('1em Bangers').then(() => {
+      document.body.style.visibility = 'visible';
+    }).catch(() => {
+      document.body.style.visibility = 'visible';
+    });
+  </script>
+  <script src="../shared-modal.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

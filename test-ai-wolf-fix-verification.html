@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Wolf Fix Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-panel {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.good { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .game-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .log-area {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐺 AI Wolf Fix Verification Test</h1>
+    
+    <div class="test-panel">
+        <h2>📋 Test Instructions</h2>
+        <div class="instructions">
+            <h3>How to Test the AI Wolf Fix:</h3>
+            <ol>
+                <li><strong>Start the game</strong> - Click "Load Game" below</li>
+                <li><strong>Set up AI wolf</strong> - Choose 2 teams, make wolf AI and rabbit human</li>
+                <li><strong>Play until PSS phase</strong> - Let the game progress to Paper-Scissors-Stone questions</li>
+                <li><strong>Trigger long questions</strong> - Wait for questions that are long enough to trigger the modal</li>
+                <li><strong>Watch for the bug</strong> - After modal closes, AI wolf should automatically roll dice</li>
+                <li><strong>Test multiple times</strong> - The bug was intermittent, so test several modal closures</li>
+            </ol>
+            
+            <h3>🔍 What to Look For:</h3>
+            <ul>
+                <li>✅ <strong>Success:</strong> AI wolf automatically rolls dice within 1-2 seconds after modal closes</li>
+                <li>❌ <strong>Bug:</strong> AI wolf gets stuck and doesn't roll dice (game appears frozen)</li>
+                <li>🔧 <strong>Recovery:</strong> If stuck, the new safety mechanisms should kick in within 5 seconds</li>
+            </ul>
+            
+            <h3>🛠️ New Safety Mechanisms Added:</h3>
+            <ul>
+                <li><strong>Enhanced AI Monitor:</strong> Checks every 2 seconds for stuck AI players</li>
+                <li><strong>Emergency Fallback:</strong> Forces action after 5 seconds if still stuck</li>
+                <li><strong>Backup Modal Handler:</strong> Additional checks when modal closes</li>
+                <li><strong>Click Recovery:</strong> Any click triggers recovery if AI is stuck</li>
+                <li><strong>Multiple Retry Mechanisms:</strong> Several layers of fallback protection</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-panel">
+        <h2>🎮 Game Controls</h2>
+        <button class="btn-primary" onclick="loadGame()">🔄 Load Game</button>
+        <button class="btn-success" onclick="startLogging()">📝 Start Logging</button>
+        <button class="btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
+        <button class="btn-primary" onclick="testRecovery()">🔧 Test Recovery</button>
+    </div>
+
+    <div class="test-panel">
+        <h2>📊 Test Status</h2>
+        <div id="testStatus">
+            <div class="status good">Ready to test - Load the game and follow instructions above</div>
+        </div>
+    </div>
+
+    <div class="test-panel">
+        <h2>📝 Debug Logs</h2>
+        <div id="debugLogs" class="log-area">
+            Logs will appear here when you start logging...
+        </div>
+    </div>
+
+    <div class="test-panel">
+        <h2>🎮 Game Window</h2>
+        <iframe id="gameFrame" class="game-frame" src="Games/RunRunRabbit/index.html"></iframe>
+    </div>
+
+    <script>
+        let gameWindow = null;
+        let loggingInterval = null;
+        let logs = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            logs.push(entry);
+            
+            const logDiv = document.getElementById('debugLogs');
+            logDiv.textContent += entry + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(entry);
+        }
+
+        function loadGame() {
+            const frame = document.getElementById('gameFrame');
+            frame.src = frame.src; // Reload
+            log('🔄 Game reloaded');
+            
+            setTimeout(() => {
+                gameWindow = frame.contentWindow;
+                log('🎮 Game window reference updated');
+                updateStatus('Game loaded - Set up AI wolf and start testing');
+            }, 1000);
+        }
+
+        function startLogging() {
+            if (loggingInterval) return;
+            
+            loggingInterval = setInterval(() => {
+                if (!gameWindow) return;
+                
+                try {
+                    const state = gameWindow.getAIState ? gameWindow.getAIState() : null;
+                    if (state && state.currentPlayer === 'wolf' && state.isDiceTurn) {
+                        log(`🔍 AI Wolf State: ${JSON.stringify(state)}`);
+                        
+                        // Check for stuck state
+                        if (!state.aiActionInProgress && !state.aiActionScheduled && 
+                            state.modalState === 'closed' && state.timeSinceModalClose > 3000) {
+                            updateStatus('⚠️ Potential stuck state detected!', 'warning');
+                        }
+                    }
+                } catch (error) {
+                    log(`❌ Error checking game state: ${error.message}`);
+                }
+            }, 1000);
+            
+            log('📝 Started logging AI wolf state');
+            updateStatus('Logging started - Watch for AI wolf behavior');
+        }
+
+        function clearLogs() {
+            logs = [];
+            document.getElementById('debugLogs').textContent = '';
+            log('🗑️ Logs cleared');
+        }
+
+        function testRecovery() {
+            if (!gameWindow) {
+                log('❌ No game window available');
+                return;
+            }
+
+            try {
+                if (gameWindow.resetAIState) {
+                    gameWindow.resetAIState();
+                    log('🔧 AI state reset for testing');
+                }
+                
+                const wolfPlayer = gameWindow.players?.find(p => p.name === 'wolf');
+                if (wolfPlayer && gameWindow.scheduleAIAction) {
+                    gameWindow.scheduleAIAction(wolfPlayer, 'test-recovery-action', 100);
+                    log('🤖 Test recovery action triggered');
+                    updateStatus('Recovery test triggered - Watch AI wolf behavior');
+                }
+            } catch (error) {
+                log(`❌ Error testing recovery: ${error.message}`);
+            }
+        }
+
+        function updateStatus(message, type = 'good') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Auto-load game when page loads
+        window.addEventListener('load', () => {
+            setTimeout(loadGame, 1000);
+        });
+
+        // Listen for console messages from the game
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            
+            // Capture AI-related logs
+            const message = args.join(' ');
+            if (message.includes('🤖') || message.includes('🔔') || message.includes('🚨')) {
+                const logDiv = document.getElementById('debugLogs');
+                if (logDiv && !message.includes('Debug Logs')) {
+                    logDiv.textContent += `[GAME] ${message}\n`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+            }
+        };
+    </script>
+</body>
+</html>

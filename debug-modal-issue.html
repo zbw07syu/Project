@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Modal Issue</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        .warning { background: #fff3e0; color: #ef6c00; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>RunRunRabbit Modal Debug Test</h1>
+    <p>This test will help identify why the AI wolf isn't rolling after modal closes.</p>
+    
+    <button onclick="startTest()">Start Test</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+    
+    <div id="logs"></div>
+    
+    <script>
+        let logCount = 0;
+        
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.innerHTML = `[${++logCount}] ${new Date().toLocaleTimeString()}: ${message}`;
+            logsDiv.appendChild(logDiv);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(`[${logCount}] ${message}`);
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            logCount = 0;
+        }
+        
+        function startTest() {
+            log('Starting modal debug test...', 'info');
+            
+            // Check if game files are accessible
+            checkGameFiles();
+        }
+        
+        function checkGameFiles() {
+            log('Checking if game files are accessible...', 'info');
+            
+            // Try to load the game script
+            const gameScript = document.createElement('script');
+            gameScript.src = './Games/RunRunRabbit/game.js';
+            gameScript.onload = () => {
+                log('✅ Game script loaded successfully', 'success');
+                checkModalSystem();
+            };
+            gameScript.onerror = () => {
+                log('❌ Failed to load game script', 'error');
+                log('Please ensure you are running this from the project root directory', 'warning');
+            };
+            document.head.appendChild(gameScript);
+        }
+        
+        function checkModalSystem() {
+            log('Checking modal system...', 'info');
+            
+            // Try to load the modal script
+            const modalScript = document.createElement('script');
+            modalScript.src = './Games/shared-modal.js';
+            modalScript.onload = () => {
+                log('✅ Modal script loaded successfully', 'success');
+                setTimeout(testModalFlow, 1000);
+            };
+            modalScript.onerror = () => {
+                log('❌ Failed to load modal script', 'error');
+            };
+            document.head.appendChild(modalScript);
+        }
+        
+        function testModalFlow() {
+            log('Testing modal flow...', 'info');
+            
+            // Check if modal functions exist
+            if (typeof window.MultipleChoiceModal !== 'undefined') {
+                log('✅ MultipleChoiceModal is available', 'success');
+                
+                // Test modal state tracking
+                if (typeof window.modalState !== 'undefined') {
+                    log(`✅ Modal state tracking available, current state: ${window.modalState}`, 'success');
+                } else {
+                    log('⚠️ Modal state tracking not initialized', 'warning');
+                    window.modalState = 'closed';
+                }
+                
+                testAIVariables();
+            } else {
+                log('❌ MultipleChoiceModal not available', 'error');
+            }
+        }
+        
+        function testAIVariables() {
+            log('Testing AI-related variables...', 'info');
+            
+            // Check for key AI variables
+            const checks = [
+                { name: 'aiActionInProgress', value: window.aiActionInProgress },
+                { name: 'pendingAIPlayer', value: window.pendingAIPlayer },
+                { name: 'isDiceTurn', value: window.isDiceTurn },
+                { name: 'currentPlayer', value: window.currentPlayer }
+            ];
+            
+            checks.forEach(check => {
+                if (typeof check.value !== 'undefined') {
+                    log(`✅ ${check.name}: ${JSON.stringify(check.value)}`, 'success');
+                } else {
+                    log(`❌ ${check.name}: undefined`, 'error');
+                }
+            });
+            
+            // Test modal event listener
+            testModalEventListener();
+        }
+        
+        function testModalEventListener() {
+            log('Testing modal event listener...', 'info');
+            
+            // Listen for modalClosed events
+            let eventReceived = false;
+            window.addEventListener('modalClosed', (e) => {
+                eventReceived = true;
+                log(`✅ modalClosed event received! Detail: ${JSON.stringify(e.detail)}`, 'success');
+                log(`Modal state when event fired: ${window.modalState}`, 'info');
+            });
+            
+            // Simulate a modal closed event
+            setTimeout(() => {
+                log('Simulating modalClosed event...', 'info');
+                window.dispatchEvent(new CustomEvent('modalClosed', { 
+                    detail: { timestamp: Date.now(), test: true } 
+                }));
+                
+                setTimeout(() => {
+                    if (eventReceived) {
+                        log('✅ Modal event system working correctly', 'success');
+                    } else {
+                        log('❌ Modal event not received', 'error');
+                    }
+                    
+                    log('=== Test Complete ===', 'info');
+                    log('If you see errors above, those may be causing the AI wolf issue.', 'warning');
+                }, 100);
+            }, 500);
+        }
+    </script>
+</body>
+</html>

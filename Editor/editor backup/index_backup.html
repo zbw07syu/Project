@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!--
+      Basic web app skeleton for a classroom question list manager.
+      - Homepage with search, create, list management (Edit/Delete/Play)
+      - Create workflow via two modals (total count, then breakdown of single vs multiple)
+      - Editor view to fill questions
+      - Play/Preview view with simple controls
+      - LocalStorage persistence
+      - Background music with volume/mute controls
+      - Bangers font for playful look
+    -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Classroom Question Lists</title>
+
+    <!-- Google Fonts: Bangers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!-- Global audio (autoplay+loop). We try to start softly and allow user control. -->
+    <audio id="bgAudio" src="./billiejeanchiptune.mp3" loop></audio>
+
+    <header class="app-header">
+      <h1>Classroom Question Lists</h1>
+
+      <div class="audio-controls" title="Background music controls">
+        <button id="audioToggle" aria-label="Toggle mute">🔈</button>
+        <input id="audioVolume" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume" />
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- HOME VIEW -->
+      <section id="homeView" class="view">
+        <div class="toolbar">
+          <input id="searchInput" type="text" placeholder="Search question lists" aria-label="Search question lists" />
+          <button id="createBtn" class="primary">Create</button>
+        </div>
+
+        <div id="emptyState" class="empty-state" hidden>
+          <p>No question lists yet. Click <strong>Create</strong> to start a new one!</p>
+        </div>
+
+        <ul id="listsContainer" class="lists"></ul>
+      </section>
+
+      <!-- EDITOR VIEW (for creating or editing a list) -->
+      <section id="editorView" class="view" hidden>
+        <div class="editor-header">
+          <button id="backToHomeFromEditor" class="ghost">← Back</button>
+          <h2 id="editorTitle">Question Editor</h2>
+        </div>
+
+        <div class="editor-meta">
+          <label>
+            List name
+            <input id="listNameInput" type="text" placeholder="e.g., Space Trivia Night" />
+          </label>
+          <div class="counts">
+            <span>Total: <strong id="countTotal">0</strong></span>
+            <span>Single-answer: <strong id="countSingle">0</strong></span>
+            <span>Multiple-choice: <strong id="countMulti">0</strong></span>
+          </div>
+        </div>
+
+        <div class="editor-actions-top">
+          <!-- Optional future feature: placeholder button -->
+          <button id="aiGenerateBtn" class="ghost" title="Placeholder – can be wired to AI later">✨ Generate Questions</button>
+          <button id="previewBtn" class="secondary">Preview</button>
+        </div>
+
+        <!-- Container where question forms are generated -->
+        <div id="questionsContainer" class="questions"></div>
+
+        <div class="editor-actions">
+          <button id="saveBtn" class="primary">Save</button>
+          <button id="cancelBtn" class="danger">Cancel</button>
+        </div>
+      </section>
+
+      <!-- PLAY VIEW (used for both Preview and Play from list) -->
+      <section id="playView" class="view" hidden>
+        <div class="play-header">
+          <button id="backFromPlay" class="ghost">← Back</button>
+          <h2 id="playTitle">Play</h2>
+        </div>
+
+        <div id="playContainer" class="play"></div>
+
+        <div class="play-controls">
+          <button id="prevQuestion" class="ghost">Prev</button>
+          <span id="playProgress">0 / 0</span>
+          <button id="nextQuestion" class="ghost">Next</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- MODALS -->
+    <!-- Modal 1: total number of questions (and optional list name) -->
+    <div id="modal1" class="modal" hidden>
+      <div class="modal-content">
+        <h3>New List</h3>
+        <label>
+          List name (optional)
+          <input id="modalListName" type="text" placeholder="e.g., Mythology Quiz" />
+        </label>
+        <label>
+          Total number of questions
+          <input id="modalTotalQuestions" type="number" min="1" step="1" placeholder="e.g., 10" />
+        </label>
+        <div class="modal-actions">
+          <button id="modal1Cancel" class="ghost">Cancel</button>
+          <button id="modal1Next" class="primary">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: breakdown of single vs multiple choice -->
+    <div id="modal2" class="modal" hidden>
+      <div class="modal-content">
+        <h3>Question Types</h3>
+        <p>How many questions are Single-answer and how many are Multiple-choice (2–4 options)?</p>
+        <div class="two-col">
+          <label>
+            Single-answer
+            <input id="modalSingleCount" type="number" min="0" step="1" value="0" />
+          </label>
+          <label>
+            Multiple-choice
+            <input id="modalMultiCount" type="number" min="0" step="1" value="0" />
+          </label>
+        </div>
+        <p id="modal2Error" class="error" hidden>Counts must add up to the total number of questions.</p>
+        <div class="modal-actions">
+          <button id="modal2Back" class="ghost">Back</button>
+          <button id="modal2Create" class="primary">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: select a game to play -->
+    <div id="gameSelectModal" class="modal" hidden>
+      <div class="modal-content">
+        <h3>Select a Game</h3>
+        <p>Choose a game to play with this question list:</p>
+        <div role="group" aria-label="Available games" style="display:flex; flex-direction:column; gap:10px;">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="radio" name="gameChoice" value="runrunrabbit" checked />
+            <span>RunRunRabbit</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="radio" name="gameChoice" value="tornado" />
+            <span>Tornado</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="radio" name="gameChoice" value="icebreak" />
+            <span>Icebreak</span>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button id="gameSelectCancel" class="ghost">Cancel</button>
+          <button id="gameSelectPlay" class="primary">Play</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast / small notification area -->
+    <div id="toast" class="toast" hidden></div>
+
+    <script defer src="./app.js"></script>
+  </body>
+</html>

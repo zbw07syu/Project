@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Icebreak</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Font: Bangers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&display=swap">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="gameTitle">Icebreak</h1>
+
+  <div id="gameContainer">
+    <!-- Left Panel -->
+    <div id="leftPanel">
+      <button id="muteBtn">Mute/Unmute Music</button>
+      <button id="restartBtn">Restart</button>
+      <button id="rulesBtn">Rules</button>
+    </div>
+
+    <!-- Center: Grid + Question Area -->
+    <div id="centerPanel">
+      <div id="grid" aria-label="Game grid"></div>
+      <div id="questionArea">
+        <div id="revealed" class="panelBox" aria-live="polite">Select a square to reveal the prompt.</div>
+        <div id="inputArea" class="panelBox">
+          <input id="guessInput" type="text" placeholder="Type your answer..." aria-label="Team answer input" />
+          <button id="submitGuess">Submit</button>
+        </div>
+        <div id="feedback" class="panelBox" aria-live="polite">
+          <span id="feedbackText"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Scoreboard -->
+    <div id="scorePanel">
+      <ul id="scores"></ul>
+    </div>
+  </div>
+
+  <canvas id="confettiCanvas" class="hidden" aria-hidden="true"></canvas>
+  <div id="strobeOverlay" class="hidden" aria-hidden="true"></div>
+
+  <!-- Audio -->
+  <audio id="bgMusic" src="iceicebaby.mp3" loop></audio>
+  <audio id="correctSfx" src="correct.wav"></audio>
+  <audio id="incorrectSfx" src="incorrect.wav"></audio>
+  <audio id="winSfx" src="Celebrationchiptune.mp3"></audio>
+
+  <!-- Setup Modals -->
+  <div id="gridSizeModal" class="modal">
+    <div class="modalContent">
+      <h2>Select grid size</h2>
+      <div class="modalButtons">
+        <button class="vpBtn gridSizeBtn" data-size="8">8</button>
+        <button class="vpBtn gridSizeBtn" data-size="12">12</button>
+        <button class="vpBtn gridSizeBtn" data-size="16">16</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="teamCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of teams</h2>
+      <div class="modalButtons">
+        <button class="vpBtn teamCountBtn" data-teams="2">2</button>
+        <button class="vpBtn teamCountBtn" data-teams="3">3</button>
+        <button class="vpBtn teamCountBtn" data-teams="4">4</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="humanCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of human teams</h2>
+      <div class="modalButtons" id="humanButtons"></div>
+      <div class="modalActions">
+        <button class="vpBtn" id="humanBack">Back</button>
+        <button class="vpBtn" id="startGame" disabled>Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules -->
+  <div id="rulesPanel" class="modal">
+    <div class="modalContent rules">
+      <h2>How to Play</h2>
+      <ol>
+        <li>Choose grid size and number of teams (2–4), then human teams (≤ total).</li>
+        <li>Teams roll dice; highest goes first.</li>
+        <li>On your turn, pick a square. A prompt is revealed.</li>
+        <li>Type the correct answer. If correct, you score hidden points and keep your turn. If incorrect, turn passes.</li>
+        <li>Game ends when all squares are claimed. Highest score wins.</li>
+      </ol>
+      <button id="closeRules">Close</button>
+    </div>
+  </div>
+
+  <script src="icebreak.js"></script>
+</body>
+</html>

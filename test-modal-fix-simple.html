@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Modal Fix - RunRunRabbit</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f0f0f0;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .console-note {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #ff9800;
+        }
+        button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .game-link {
+            display: inline-block;
+            background: #2196f3;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .game-link:hover {
+            background: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐺 RunRunRabbit AI Modal Fix Test</h1>
+    
+    <div class="instructions">
+        <h2>Testing Instructions</h2>
+        
+        <div class="step">
+            <strong>Step 1:</strong> Open the browser's Developer Console (F12 → Console tab)
+        </div>
+        
+        <div class="step">
+            <strong>Step 2:</strong> Click the "Open Game" button below to launch RunRunRabbit
+        </div>
+        
+        <div class="step">
+            <strong>Step 3:</strong> Set up a game with AI Wolf:
+            <ul>
+                <li>Choose any number of teams (2, 3, or 4)</li>
+                <li>Set Wolf as AI (not human)</li>
+                <li>Set at least one rabbit as human</li>
+                <li>Start the game</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <strong>Step 4:</strong> Play until you reach a Paper-Scissors-Stone round where:
+            <ul>
+                <li>A human rabbit loses and gets a multiple choice question</li>
+                <li>The question has long options that trigger a modal</li>
+                <li>After answering, the wolf should be next to roll dice</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <strong>Step 5:</strong> Watch the console for debug messages starting with:
+            <ul>
+                <li>🔔 (Modal system messages)</li>
+                <li>🤖 (AI action messages)</li>
+                <li>📝 (Question handling messages)</li>
+            </ul>
+        </div>
+        
+        <div class="console-note">
+            <strong>🔍 What to Look For:</strong><br>
+            After the modal closes, you should see messages like:<br>
+            • "🔔 Modal system: modalClosed event dispatched"<br>
+            • "🤖 Modal closed event received"<br>
+            • "🤖 Processing pending AI player: wolf"<br>
+            • "🤖 Modal closed - proceeding with AI roll for: wolf"<br>
+            <br>
+            <strong>✅ Success:</strong> The AI wolf automatically rolls dice and moves<br>
+            <strong>❌ Failure:</strong> The AI wolf gets stuck and doesn't roll
+        </div>
+        
+        <a href="./Games/RunRunRabbit/index.html" target="_blank" class="game-link">
+            🎮 Open RunRunRabbit Game
+        </a>
+        
+        <div style="margin-top: 30px;">
+            <button onclick="showDebugInfo()">Show Debug Info</button>
+            <button onclick="clearConsole()">Clear Console</button>
+        </div>
+        
+        <div id="debug-info" style="display: none; margin-top: 20px; background: white; padding: 15px; border-radius: 4px;"></div>
+    </div>
+    
+    <script>
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML = `
+                <h3>Debug Information</h3>
+                <p><strong>Current Time:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+                <p><strong>Console Available:</strong> ${typeof console !== 'undefined' ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>Modal State Tracking:</strong> ${typeof window.modalState !== 'undefined' ? '✅ Available' : '❌ Not Available'}</p>
+                <p><strong>Instructions:</strong> Open the game in a new tab and watch the console for debug messages.</p>
+            `;
+        }
+        
+        function clearConsole() {
+            if (console.clear) {
+                console.clear();
+                console.log('🧹 Console cleared - ready for testing');
+            }
+        }
+        
+        // Initialize
+        console.log('🧪 Modal fix test page loaded');
+        console.log('🔍 Open the game and watch for debug messages starting with 🔔 and 🤖');
+    </script>
+</body>
+</html>

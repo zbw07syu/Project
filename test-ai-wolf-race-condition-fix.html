@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Wolf Race Condition Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .game-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .debug-panel {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .status.good { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .state-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .race-condition-indicator {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .race-condition-indicator.safe { background: #d4edda; color: #155724; }
+        .race-condition-indicator.warning { background: #fff3cd; color: #856404; }
+        .race-condition-indicator.danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐺 AI Wolf Race Condition Fix Test</h1>
+        
+        <div class="instructions">
+            <h3>🎯 Race Condition Fix Test:</h3>
+            <p><strong>This test specifically targets the race condition between modal close events and PSS transition callbacks.</strong></p>
+            <ol>
+                <li><strong>Setup:</strong> Choose 2 teams, make wolf AI</li>
+                <li><strong>Trigger:</strong> Play until you get long multiple-choice questions that open modals</li>
+                <li><strong>Monitor:</strong> Watch the race condition indicator below</li>
+                <li><strong>Verify:</strong> AI wolf should consistently roll dice after modal closes</li>
+                <li><strong>Expected:</strong> No more race conditions between modal events and PSS transitions</li>
+            </ol>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="refreshGame()">🔄 Refresh Game</button>
+            <button class="btn btn-success" onclick="checkState()">📊 Check State</button>
+            <button class="btn btn-warning" onclick="forceAIAction()">⚡ Force AI Action</button>
+            <button class="btn btn-danger" onclick="resetState()">🔧 Reset State</button>
+        </div>
+
+        <div id="raceConditionIndicator" class="race-condition-indicator safe">
+            ✅ No Race Condition Detected
+        </div>
+
+        <div id="status" class="status good">
+            ✅ Monitor ready - Load the game and start testing
+        </div>
+
+        <div class="state-display" id="stateDisplay">
+            Waiting for game to load...
+        </div>
+
+        <iframe id="gameFrame" class="game-frame" src="Games/RunRunRabbit/index.html"></iframe>
+
+        <div class="debug-panel" id="debugLog">
+            <div style="color: #74c0fc;">Race condition monitor initialized</div>
+        </div>
+    </div>
+
+    <script>
+        let gameWindow = null;
+        let monitorInterval = null;
+        let lastState = null;
+
+        // Initialize when iframe loads
+        document.getElementById('gameFrame').onload = function() {
+            gameWindow = this.contentWindow;
+            startMonitoring();
+            updateStatus('✅ Game loaded - monitoring for race conditions', 'good');
+        };
+
+        function startMonitoring() {
+            if (monitorInterval) clearInterval(monitorInterval);
+            
+            // Monitor every 200ms for real-time race condition detection
+            monitorInterval = setInterval(() => {
+                if (!gameWindow) return;
+                
+                try {
+                    const aiState = gameWindow.getAIState ? gameWindow.getAIState() : null;
+                    
+                    if (aiState) {
+                        updateStateDisplay(aiState);
+                        checkForRaceCondition(aiState);
+                        
+                        // Log significant state changes
+                        if (!lastState || hasSignificantChange(lastState, aiState)) {
+                            logStateChange(aiState);
+                            lastState = JSON.parse(JSON.stringify(aiState));
+                        }
+                    }
+                } catch (error) {
+                    // Game might not be fully loaded yet
+                }
+            }, 200);
+        }
+
+        function hasSignificantChange(oldState, newState) {
+            const significantFields = [
+                'aiActionInProgress', 'aiActionScheduled', 'modalState', 
+                'modalCallbackInProgress', 'pssTransitionInProgress', 'currentPlayer'
+            ];
+            
+            return significantFields.some(field => oldState[field] !== newState[field]);
+        }
+
+        function updateStateDisplay(aiState) {
+            const display = document.getElementById('stateDisplay');
+            display.innerHTML = `
+                <strong>Current State:</strong><br>
+                Player: ${aiState.currentPlayer || 'none'} | 
+                Dice Turn: ${aiState.isDiceTurn} | 
+                AI In Progress: ${aiState.aiActionInProgress} | 
+                AI Scheduled: ${aiState.aiActionScheduled}<br>
+                Modal State: ${aiState.modalState} | 
+                Modal Callback: ${aiState.modalCallbackInProgress} | 
+                PSS Transition: ${aiState.pssTransitionInProgress}<br>
+                Queue Length: ${aiState.aiQueueLength} | 
+                Time Since Modal: ${aiState.timeSinceModalClose}ms
+            `;
+        }
+
+        function checkForRaceCondition(aiState) {
+            const indicator = document.getElementById('raceConditionIndicator');
+            
+            // Check for potential race condition scenarios
+            const modalClosing = aiState.modalState === 'closing';
+            const multipleAITriggers = aiState.aiActionScheduled && aiState.modalCallbackInProgress;
+            const conflictingTransitions = aiState.modalCallbackInProgress && aiState.pssTransitionInProgress;
+            
+            // Enhanced stuck state detection
+            const shouldBeRolling = aiState.currentPlayer === 'wolf' && 
+                                  aiState.isDiceTurn && 
+                                  !aiState.aiActionInProgress && 
+                                  !aiState.aiActionScheduled &&
+                                  aiState.modalState === 'closed' &&
+                                  !aiState.modalCallbackInProgress &&
+                                  !aiState.pssTransitionInProgress &&
+                                  aiState.timeSinceModalClose > 3000; // Increased threshold
+            
+            // Check for AI flag conflicts (new detection)
+            const flagConflict = aiState.aiActionInProgress && aiState.aiActionScheduled;
+            
+            // Check for rapid state changes (potential race condition indicator)
+            const rapidChanges = lastState && (
+                (lastState.aiActionInProgress !== aiState.aiActionInProgress && aiState.timeSinceModalClose < 500) ||
+                (lastState.modalCallbackInProgress !== aiState.modalCallbackInProgress && aiState.aiActionInProgress)
+            );
+            
+            if (shouldBeRolling) {
+                indicator.className = 'race-condition-indicator danger';
+                indicator.textContent = '🚨 STUCK STATE: AI Wolf should be rolling but isn\'t!';
+                updateStatus('🚨 Race condition detected - AI wolf stuck!', 'error');
+                logEvent('🚨 RACE CONDITION: AI wolf stuck state detected', 'error');
+            } else if (flagConflict) {
+                indicator.className = 'race-condition-indicator danger';
+                indicator.textContent = '🚨 FLAG CONFLICT: Both aiActionInProgress and aiActionScheduled are true!';
+                updateStatus('🚨 AI flag conflict detected!', 'error');
+                logEvent('🚨 RACE CONDITION: AI flag conflict detected', 'error');
+            } else if (rapidChanges) {
+                indicator.className = 'race-condition-indicator warning';
+                indicator.textContent = '⚠️ Rapid State Changes: Potential race condition';
+                logEvent('⚠️ Rapid state changes detected', 'warning');
+            } else if (conflictingTransitions) {
+                indicator.className = 'race-condition-indicator warning';
+                indicator.textContent = '⚠️ Conflicting Transitions: Modal callback + PSS transition';
+                logEvent('⚠️ Conflicting transitions detected', 'warning');
+            } else if (multipleAITriggers) {
+                indicator.className = 'race-condition-indicator warning';
+                indicator.textContent = '⚠️ Multiple AI Triggers: Scheduled + Modal callback';
+                logEvent('⚠️ Multiple AI triggers detected', 'warning');
+            } else if (modalClosing) {
+                indicator.className = 'race-condition-indicator warning';
+                indicator.textContent = '⏳ Modal Closing: Monitoring for race conditions...';
+            } else {
+                indicator.className = 'race-condition-indicator safe';
+                indicator.textContent = '✅ No Race Condition Detected';
+            }
+        }
+
+        function logStateChange(aiState) {
+            logEvent(`🔄 State Change: ${aiState.currentPlayer || 'none'} | ` +
+                    `Modal: ${aiState.modalState} | ` +
+                    `Callback: ${aiState.modalCallbackInProgress} | ` +
+                    `PSS: ${aiState.pssTransitionInProgress} | ` +
+                    `AI: ${aiState.aiActionInProgress}/${aiState.aiActionScheduled}`, 'info');
+        }
+
+        function logEvent(message, type = 'info') {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#74c0fc',
+                warning: '#ffd93d',
+                error: '#ff6b6b',
+                success: '#6bcf7f'
+            };
+            
+            const entryDiv = document.createElement('div');
+            entryDiv.style.color = colors[type] || colors.info;
+            entryDiv.innerHTML = `[${timestamp}] ${message}`;
+            
+            logDiv.appendChild(entryDiv);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // Keep only last 50 entries
+            while (logDiv.children.length > 50) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        }
+
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        // Control functions
+        function refreshGame() {
+            document.getElementById('gameFrame').src = document.getElementById('gameFrame').src;
+            document.getElementById('debugLog').innerHTML = '';
+            updateStatus('🔄 Game refreshed', 'good');
+            logEvent('🔄 Game refreshed', 'info');
+        }
+
+        function checkState() {
+            if (!gameWindow || !gameWindow.getAIState) {
+                updateStatus('❌ Cannot access game state', 'error');
+                return;
+            }
+            
+            const aiState = gameWindow.getAIState();
+            logEvent(`📊 Manual State Check: ${JSON.stringify(aiState, null, 2)}`, 'info');
+        }
+
+        function forceAIAction() {
+            if (!gameWindow || !gameWindow.scheduleAIAction) {
+                updateStatus('❌ Cannot access game functions', 'error');
+                return;
+            }
+            
+            try {
+                const currentPlayer = gameWindow.currentPlayer;
+                if (currentPlayer && gameWindow.isPlayerAI && gameWindow.isPlayerAI(currentPlayer)) {
+                    gameWindow.scheduleAIAction(currentPlayer, 'manual-force-action', 50);
+                    logEvent(`⚡ Forced AI action for ${currentPlayer.name}`, 'warning');
+                    updateStatus('⚡ AI action forced', 'warning');
+                } else {
+                    updateStatus('❌ No AI player to force action for', 'error');
+                }
+            } catch (error) {
+                logEvent(`❌ Error forcing AI action: ${error.message}`, 'error');
+            }
+        }
+
+        function resetState() {
+            if (!gameWindow || !gameWindow.resetAIState) {
+                updateStatus('❌ Cannot access game functions', 'error');
+                return;
+            }
+            
+            gameWindow.resetAIState();
+            logEvent('🔧 AI state reset manually', 'warning');
+            updateStatus('🔧 AI state reset', 'warning');
+        }
+    </script>
+</body>
+</html>
