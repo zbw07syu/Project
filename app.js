@@ -654,7 +654,7 @@
         }))
       };
       const data = encodeURIComponent(JSON.stringify(payload));
-      window.open(`../Games/Icebreak/index.html#questions=${data}`, '_blank');
+      window.open(`./Games/Icebreak/index.html#questions=${data}`, '_blank');
       return;
     }
 
@@ -927,11 +927,11 @@
       closeGameSelectModal();
       if (choice === 'runrunrabbit') {
         // Open the game in a new tab with data in hash (avoids URL length issues somewhat)
-        window.open(`../Games/RunRunRabbit/index.html#questions=${data}`, '_blank');
+        window.open(`./Games/RunRunRabbit/index.html#questions=${data}`, '_blank');
       } else if (choice === 'tornado') {
-        window.open(`../Games/Tornado/index.html#questions=${data}`, '_blank');
+        window.open(`./Games/Tornado/index.html#questions=${data}`, '_blank');
       } else if (choice === 'icebreak') {
-        window.open(`../Games/Icebreak/index.html#questions=${data}`, '_blank');
+        window.open(`./Games/Icebreak/index.html#questions=${data}`, '_blank');
       }
     });
 
