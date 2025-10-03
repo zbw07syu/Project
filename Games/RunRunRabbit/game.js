@@ -2647,19 +2647,30 @@ function showNextStep() {
       aiMsg.style.cssText = 'padding: 10px; color: #666; font-style: italic;';
       controlsDiv.appendChild(aiMsg);
     } else {
-      // Human player - show modal with "Show Answer" button
+      // Human player - show "Show Answer" button
       if (window.MultipleChoiceModal) {
-        console.log('🔔 Showing open-answer modal for human player');
-        window.MultipleChoiceModal.showOpenAnswerModal(
-          currentQuestion.text,
-          currentQuestion.answer,
-          currentQuestion.alternates,
-          () => {
-            console.log('📝 Open-answer modal closed');
-            answerShown = true;
-            showNextOrEnd();
+        console.log('🔔 Showing Show Answer button for human player (open answer)');
+        
+        // Create "Show Answer" button in controls
+        const showAnswerBtn = document.createElement("button");
+        showAnswerBtn.textContent = "Show Answer";
+        showAnswerBtn.classList.add("controlsBtn");
+        controlsDiv.appendChild(showAnswerBtn);
+
+        showAnswerBtn.addEventListener("click", () => {
+          if (!answerShown) {
+            const alt = Array.isArray(currentQuestion.alternates) ? currentQuestion.alternates.filter(a => a && a.trim() !== '') : [];
+            const altSuffix = alt.length ? `\n(Also accepted: ${alt.join(', ')})` : '';
+            const answerText = `Answer: ${currentQuestion.answer}${altSuffix}`;
+            
+            // Show answer in modal with just a close button (no correct/incorrect)
+            window.MultipleChoiceModal.showAnswerInModal(answerText, () => {
+              console.log('📝 Open-answer modal closed, calling showNextOrEnd');
+              answerShown = true;
+              showNextOrEnd();
+            });
           }
-        );
+        });
       } else {
         // Fallback to original behavior
         const showAnswerBtn = document.createElement("button");
