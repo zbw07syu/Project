@@ -304,8 +304,12 @@
    * Show answer in the modal and replace options with a close button
    * @param {string} answerText - The answer text to display
    * @param {function} onClose - Callback function when close button is clicked
+   * @param {object} options - Optional configuration
+   * @param {boolean} options.showCorrectIncorrect - Show Correct/Incorrect buttons instead of Close
+   * @param {function} options.onCorrect - Callback when Correct is clicked
+   * @param {function} options.onIncorrect - Callback when Incorrect is clicked
    */
-  function showAnswerInModal(answerText, onClose) {
+  function showAnswerInModal(answerText, onClose, options = {}) {
     if (!modalContainer) return;
     
     const answerEl = modalContainer.querySelector('.mc-modal-answer');
@@ -319,21 +323,51 @@
       answerEl.textContent = answerText;
       answerEl.classList.add('show');
       
-      // Create a close button and add it AFTER the answer (inside the answer container)
-      const closeBtn = document.createElement('button');
-      closeBtn.textContent = 'Close';
-      closeBtn.className = 'mc-modal-option';
-      closeBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 14px; margin-top: 15px; padding: 10px 20px; min-height: 40px;';
-      
-      closeBtn.addEventListener('click', () => {
-        closeModal();
-        if (onClose) {
-          setTimeout(() => onClose(), 200);
-        }
-      });
-      
-      // Append close button to the answer container (below the answer text)
-      answerEl.appendChild(closeBtn);
+      if (options.showCorrectIncorrect) {
+        // Create Correct and Incorrect buttons
+        const correctBtn = document.createElement('button');
+        correctBtn.textContent = 'Correct';
+        correctBtn.className = 'mc-modal-option correct-btn';
+        correctBtn.style.cssText = 'background: linear-gradient(135deg, #4caf50, #45a049); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
+        
+        const incorrectBtn = document.createElement('button');
+        incorrectBtn.textContent = 'Incorrect';
+        incorrectBtn.className = 'mc-modal-option incorrect-btn';
+        incorrectBtn.style.cssText = 'background: linear-gradient(135deg, #f44336, #da190b); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
+        
+        correctBtn.addEventListener('click', () => {
+          if (options.onCorrect) {
+            options.onCorrect();
+          }
+        });
+        
+        incorrectBtn.addEventListener('click', () => {
+          closeModal();
+          if (options.onIncorrect) {
+            setTimeout(() => options.onIncorrect(), 200);
+          }
+        });
+        
+        // Append buttons to the answer container
+        answerEl.appendChild(correctBtn);
+        answerEl.appendChild(incorrectBtn);
+      } else {
+        // Create a close button and add it AFTER the answer (inside the answer container)
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.className = 'mc-modal-option';
+        closeBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 14px; margin-top: 15px; padding: 10px 20px; min-height: 40px;';
+        
+        closeBtn.addEventListener('click', () => {
+          closeModal();
+          if (onClose) {
+            setTimeout(() => onClose(), 200);
+          }
+        });
+        
+        // Append close button to the answer container (below the answer text)
+        answerEl.appendChild(closeBtn);
+      }
     }
   }
 
@@ -437,9 +471,11 @@
    * @param {string} question - The question text
    * @param {string} answer - The answer text
    * @param {string[]} alternates - Array of alternate answers
-   * @param {function} onClose - Callback when modal is closed
+   * @param {object} callbacks - Callback functions
+   * @param {function} callbacks.onCorrect - Called when Correct is clicked
+   * @param {function} callbacks.onIncorrect - Called when Incorrect is clicked
    */
-  function showOpenAnswerModal(question, answer, alternates, onClose) {
+  function showOpenAnswerModal(question, answer, alternates, callbacks = {}) {
     if (!modalContainer) {
       createMultipleChoiceModal();
     }
@@ -466,7 +502,7 @@
 
     const showAnswerBtn = document.createElement('button');
     showAnswerBtn.textContent = 'Show Answer';
-    showAnswerBtn.className = 'mc-modal-option';
+    showAnswerBtn.className = 'mc-modal-option answer-btn';
     showAnswerBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 18px;';
     
     showAnswerBtn.addEventListener('click', () => {
@@ -477,8 +513,12 @@
       const altSuffix = alt.length ? `\n(Also accepted: ${alt.join(', ')})` : '';
       const answerText = `Answer: ${answer}${altSuffix}`;
       
-      // Show answer in modal
-      showAnswerInModal(answerText, onClose);
+      // Show answer in modal with Correct/Incorrect buttons
+      showAnswerInModal(answerText, null, {
+        showCorrectIncorrect: true,
+        onCorrect: callbacks.onCorrect,
+        onIncorrect: callbacks.onIncorrect
+      });
     });
 
     optionsEl.appendChild(showAnswerBtn);
@@ -495,6 +535,58 @@
 
     // Focus the show answer button
     setTimeout(() => showAnswerBtn.focus(), 100);
+  }
+
+  /**
+   * Show Continue/Pass buttons in modal after correct answer
+   * @param {string} message - Message to display (e.g., "Correct! +10 points")
+   * @param {object} callbacks - Callback functions
+   * @param {function} callbacks.onContinue - Called when Continue is clicked
+   * @param {function} callbacks.onPass - Called when Pass is clicked
+   */
+  function showContinuePassModal(message, callbacks = {}) {
+    if (!modalContainer) return;
+    
+    const answerEl = modalContainer.querySelector('.mc-modal-answer');
+    const optionsEl = modalContainer.querySelector('.mc-modal-options');
+    
+    if (answerEl && optionsEl) {
+      // Clear the options section
+      optionsEl.innerHTML = '';
+      
+      // Show the message
+      answerEl.textContent = message;
+      answerEl.classList.add('show');
+      
+      // Create Continue and Pass buttons
+      const continueBtn = document.createElement('button');
+      continueBtn.textContent = 'Continue';
+      continueBtn.className = 'mc-modal-option continue-btn';
+      continueBtn.style.cssText = 'background: linear-gradient(135deg, #4caf50, #45a049); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
+      
+      const passBtn = document.createElement('button');
+      passBtn.textContent = 'Pass';
+      passBtn.className = 'mc-modal-option pass-btn';
+      passBtn.style.cssText = 'background: linear-gradient(135deg, #ff9800, #f57c00); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
+      
+      continueBtn.addEventListener('click', () => {
+        closeModal();
+        if (callbacks.onContinue) {
+          setTimeout(() => callbacks.onContinue(), 200);
+        }
+      });
+      
+      passBtn.addEventListener('click', () => {
+        closeModal();
+        if (callbacks.onPass) {
+          setTimeout(() => callbacks.onPass(), 200);
+        }
+      });
+      
+      // Append buttons to the answer container
+      answerEl.appendChild(continueBtn);
+      answerEl.appendChild(passBtn);
+    }
   }
 
   /**
@@ -551,6 +643,7 @@
     showModal: showOptionsModal,
     showOpenAnswerModal: showOpenAnswerModal,
     showAnswerInModal: showAnswerInModal,
+    showContinuePassModal: showContinuePassModal,
     showInline: showOptionsInline,
     displayOptions: displayOptions,
     closeModal: closeModal,

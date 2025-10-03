@@ -292,18 +292,19 @@ function pickBox(btn, num) {
   }
 
   const question = questions[currentQuestionIndex % questions.length];
-  questionDiv.textContent = question.q;
+  
+  // Clear the question area (question will be shown in modal)
+  questionDiv.textContent = `Team ${currentTeam + 1} is answering a question...`;
+  answerDiv.textContent = "";
+  controlsDiv.innerHTML = "";
+
+  // Initialize modal system if not already done
+  if (window.MultipleChoiceModal) {
+    window.MultipleChoiceModal.createModal();
+  }
 
   if (question.type === "multiple") {
-    answerDiv.textContent = "";
-    controlsDiv.innerHTML = "";
-
-    // Initialize modal system if not already done
-    if (window.MultipleChoiceModal) {
-      window.MultipleChoiceModal.createModal();
-    }
-
-    // Handle option selection
+    // Multiple choice - always show in modal
     const handleOptionSelect = (selectedOption, index) => {
       // Ensure we're in a valid game state before processing the answer
       if (!started || gameOver) return;
@@ -311,17 +312,15 @@ function pickBox(btn, num) {
       checkMultipleAnswer(selectedOption, question);
     };
 
-    // Use smart display logic - modal for long options, inline for short ones
     if (window.MultipleChoiceModal) {
-      window.MultipleChoiceModal.displayOptions(
-        controlsDiv,
+      window.MultipleChoiceModal.showModal(
         question.q,
         question.options,
-        handleOptionSelect,
-        "option-btn"
+        handleOptionSelect
       );
     } else {
-      // Fallback to original behavior if modal system not available
+      // Fallback to inline if modal system not available
+      questionDiv.textContent = question.q;
       question.options.forEach(option => {
         const optionBtn = document.createElement("button");
         optionBtn.textContent = option;
@@ -333,13 +332,28 @@ function pickBox(btn, num) {
 
     setButtonsState({ grid: false });
   } else {
-    // Single-answer flow
-    controlsDiv.innerHTML = '';
-    const showBtn = document.createElement('button');
-    showBtn.className = 'answer-btn';
-    showBtn.textContent = 'Show Answer';
-    showBtn.onclick = () => showAnswer(question);
-    controlsDiv.appendChild(showBtn);
+    // Open answer - always show in modal
+    if (window.MultipleChoiceModal) {
+      const alts = Array.isArray(question.alts) ? question.alts : [];
+      window.MultipleChoiceModal.showOpenAnswerModal(
+        question.q,
+        question.a,
+        alts,
+        {
+          onCorrect: () => markAnswer(true, question.points),
+          onIncorrect: () => markAnswer(false, question.points)
+        }
+      );
+    } else {
+      // Fallback to inline if modal system not available
+      questionDiv.textContent = question.q;
+      const showBtn = document.createElement('button');
+      showBtn.className = 'answer-btn';
+      showBtn.textContent = 'Show Answer';
+      showBtn.onclick = () => showAnswer(question);
+      controlsDiv.appendChild(showBtn);
+    }
+    
     setButtonsState({ grid: false, revealAnswer: true, correctIncorrect: false });
   }
 
@@ -355,19 +369,62 @@ function checkMultipleAnswer(selected, question) {
     teams[currentTeam].score += question.points;
     updateScores();
 
-    answerDiv.textContent = `Correct! +${question.points} points`;
-    controlsDiv.innerHTML = `
-      <button class="continue-btn" onclick="continueTurn()">Continue</button>
-      <button class="pass-btn" onclick="passTurn()">Pass</button>
-    `;
+    const message = `Correct! The answer is: ${question.a}\n\n+${question.points} points`;
+    
+    // Check if this is the last question
+    if (allSquaresPicked()) {
+      // Last question - close modal and end game
+      if (window.MultipleChoiceModal) {
+        window.MultipleChoiceModal.showAnswerInModal(message, () => {
+          checkGameEnd();
+        });
+      } else {
+        answerDiv.textContent = message;
+        setTimeout(() => checkGameEnd(), 2000);
+      }
+    } else {
+      // Not the last question - show Continue/Pass buttons in modal
+      if (window.MultipleChoiceModal) {
+        window.MultipleChoiceModal.showContinuePassModal(message, {
+          onContinue: continueTurn,
+          onPass: passTurn
+        });
+      } else {
+        // Fallback to inline
+        answerDiv.textContent = message;
+        controlsDiv.innerHTML = `
+          <button class="continue-btn" onclick="continueTurn()">Continue</button>
+          <button class="pass-btn" onclick="passTurn()">Pass</button>
+        `;
+      }
+    }
   } else {
     incorrectSfx.currentTime = 0;
     incorrectSfx.play();
-    answerDiv.textContent = `Incorrect. The correct answer was: ${question.a}`;
-    endTurn();
+    
+    const message = `Incorrect. You selected: ${selected}\n\nThe correct answer is: ${question.a}`;
+    
+    // Show incorrect message in modal and close after delay
+    if (window.MultipleChoiceModal) {
+      window.MultipleChoiceModal.showAnswerInModal(message, () => {
+        if (allSquaresPicked()) {
+          checkGameEnd();
+        } else {
+          endTurn();
+        }
+      });
+    } else {
+      // Fallback to inline
+      answerDiv.textContent = message;
+      setTimeout(() => {
+        if (allSquaresPicked()) {
+          checkGameEnd();
+        } else {
+          endTurn();
+        }
+      }, 2000);
+    }
   }
-
-  if (allSquaresPicked()) checkGameEnd();
 }
 
 function showAnswer(question) {
@@ -390,19 +447,53 @@ function markAnswer(correct, points) {
     teams[currentTeam].score += points;
     updateScores();
 
-    controlsDiv.innerHTML = `
-      <button class="continue-btn" onclick="continueTurn()">Continue</button>
-      <button class="pass-btn" onclick="passTurn()">Pass</button>
-    `;
-    setButtonsState({ grid: false, revealAnswer: false, correctIncorrect: false });
-    document.querySelectorAll(".continue-btn, .pass-btn").forEach(btn => btn.disabled = false);
+    const message = `Correct! +${points} points`;
+    
+    // Check if this is the last question
+    if (allSquaresPicked()) {
+      // Last question - close modal and end game
+      if (window.MultipleChoiceModal) {
+        window.MultipleChoiceModal.showAnswerInModal(message, () => {
+          checkGameEnd();
+        });
+      } else {
+        answerDiv.textContent = message;
+        setTimeout(() => checkGameEnd(), 2000);
+      }
+    } else {
+      // Not the last question - show Continue/Pass buttons in modal
+      if (window.MultipleChoiceModal) {
+        window.MultipleChoiceModal.showContinuePassModal(message, {
+          onContinue: continueTurn,
+          onPass: passTurn
+        });
+      } else {
+        // Fallback to inline
+        controlsDiv.innerHTML = `
+          <button class="continue-btn" onclick="continueTurn()">Continue</button>
+          <button class="pass-btn" onclick="passTurn()">Pass</button>
+        `;
+        setButtonsState({ grid: false, revealAnswer: false, correctIncorrect: false });
+        document.querySelectorAll(".continue-btn, .pass-btn").forEach(btn => btn.disabled = false);
+      }
+    }
   } else {
     incorrectSfx.currentTime = 0;
     incorrectSfx.play().catch(() => {});
-    endTurn();
+    
+    // Close modal if it's open, then end turn or end game
+    if (window.MultipleChoiceModal) {
+      window.MultipleChoiceModal.closeModal();
+    }
+    
+    setTimeout(() => {
+      if (allSquaresPicked()) {
+        checkGameEnd();
+      } else {
+        endTurn();
+      }
+    }, 200);
   }
-
-  if (allSquaresPicked()) checkGameEnd();
 }
 
 function continueTurn() {
@@ -459,6 +550,9 @@ function checkGameEnd() {
     let winnerText = '';
     if (winners.length === 1) winnerText = `Team ${winners[0] + 1} are the winners!`;
     else winnerText = `It's a tie between ${winners.map(i => `Team ${i + 1}`).join(', ')}!`;
+
+    // Clear the questionDiv before showing victory message
+    questionDiv.textContent = "";
 
     const victoryEl = document.createElement('div');
     victoryEl.classList.add('victory-text');
@@ -635,7 +729,12 @@ function triggerAITurnIfNeeded() {
 
     // Step 2: after question appears, answer
     setTimeout(() => {
-      const optionButtons = Array.from(document.querySelectorAll('.option-btn'));
+      // Check for modal options first (modal system), then fallback to inline
+      let optionButtons = Array.from(document.querySelectorAll('.mc-modal-option:not(.answer-btn):not(.correct-btn):not(.incorrect-btn):not(.continue-btn):not(.pass-btn)'));
+      if (optionButtons.length === 0) {
+        optionButtons = Array.from(document.querySelectorAll('.option-btn'));
+      }
+      
       if (optionButtons.length > 0) {
         // Multiple choice: pick random option
         const ob = optionButtons[Math.floor(Math.random() * optionButtons.length)];
@@ -643,26 +742,39 @@ function triggerAITurnIfNeeded() {
 
         // After result if correct, decide to Continue/Pass
         setTimeout(() => {
-          const continueBtn = document.querySelector('.continue-btn');
-          const passBtn = document.querySelector('.pass-btn');
+          // Check modal first, then inline
+          let continueBtn = document.querySelector('.mc-modal-answer .continue-btn');
+          let passBtn = document.querySelector('.mc-modal-answer .pass-btn');
+          if (!continueBtn) continueBtn = document.querySelector('.continue-btn');
+          if (!passBtn) passBtn = document.querySelector('.pass-btn');
+          
           if (continueBtn && Math.random() < AI_CONFIG.continueChance) continueBtn.click();
           else if (passBtn) passBtn.click();
         }, d3);
       } else {
         // Single-answer: reveal, then mark correct/incorrect
-        const revealBtn = document.querySelector('.answer-btn');
+        // Check modal first, then inline
+        let revealBtn = document.querySelector('.mc-modal-option.answer-btn');
+        if (!revealBtn) revealBtn = document.querySelector('.answer-btn');
         if (revealBtn) revealBtn.click();
 
         setTimeout(() => {
           const correct = Math.random() < AI_CONFIG.correctChance;
           const btnSel = correct ? '.correct-btn' : '.incorrect-btn';
-          const markBtn = document.querySelector(btnSel);
+          
+          // Check modal first, then inline
+          let markBtn = document.querySelector('.mc-modal-answer ' + btnSel);
+          if (!markBtn) markBtn = document.querySelector(btnSel);
           if (markBtn) markBtn.click();
 
           // After marking correct, decide Continue/Pass
           setTimeout(() => {
-            const continueBtn = document.querySelector('.continue-btn');
-            const passBtn = document.querySelector('.pass-btn');
+            // Check modal first, then inline
+            let continueBtn = document.querySelector('.mc-modal-answer .continue-btn');
+            let passBtn = document.querySelector('.mc-modal-answer .pass-btn');
+            if (!continueBtn) continueBtn = document.querySelector('.continue-btn');
+            if (!passBtn) passBtn = document.querySelector('.pass-btn');
+            
             if (continueBtn && Math.random() < AI_CONFIG.continueChance) continueBtn.click();
             else if (passBtn) passBtn.click();
           }, d3);
