@@ -93,6 +93,9 @@ diceSfx.volume = 0.5;
 passSfx.volume = 0.5;
 victorySfx.volume = 0.2; // lower celebration volume
 
+// Track music mute state
+let musicMuted = false;
+
 // ==== UTILS ====
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -568,7 +571,7 @@ function checkGameEnd() {
         bgMusic.currentTime = 0;
         bgMusic.loop = false;
       }
-      if (victorySfx) {
+      if (victorySfx && !musicMuted) {
         victorySfx.currentTime = 0;
         victorySfx.play().catch(() => {});
       }
@@ -693,11 +696,25 @@ function resizeConfettiCanvas(canvas) {
 }
 
 function toggleMusic() {
-  // If victory is showing (game ended), don’t resume bg music
-  const victoryShowing = document.querySelector('.victory-text');
-  if (victoryShowing) return;
-  if (bgMusic.paused) bgMusic.play();
-  else bgMusic.pause();
+  musicMuted = !musicMuted;
+  
+  if (musicMuted) {
+    // Mute both background music and victory music
+    bgMusic.pause();
+    if (victorySfx) victorySfx.pause();
+  } else {
+    // Unmute - play appropriate music based on game state
+    const victoryShowing = document.querySelector('.victory-text');
+    if (victoryShowing) {
+      // Game is over - play victory music
+      if (victorySfx) {
+        victorySfx.play().catch(() => {});
+      }
+    } else {
+      // Game is ongoing - play background music
+      bgMusic.play().catch(() => {});
+    }
+  }
 }
 
 function restartGame() {
@@ -740,7 +757,7 @@ function triggerAITurnIfNeeded() {
         const ob = optionButtons[Math.floor(Math.random() * optionButtons.length)];
         ob.click();
 
-        // After result if correct, decide to Continue/Pass
+        // After result, check for Continue/Pass buttons (correct answer) or Close button (incorrect answer)
         setTimeout(() => {
           // Check modal first, then inline
           let continueBtn = document.querySelector('.mc-modal-answer .continue-btn');
@@ -748,8 +765,18 @@ function triggerAITurnIfNeeded() {
           if (!continueBtn) continueBtn = document.querySelector('.continue-btn');
           if (!passBtn) passBtn = document.querySelector('.pass-btn');
           
-          if (continueBtn && Math.random() < AI_CONFIG.continueChance) continueBtn.click();
-          else if (passBtn) passBtn.click();
+          if (continueBtn && passBtn) {
+            // Correct answer - decide to Continue/Pass
+            if (Math.random() < AI_CONFIG.continueChance) continueBtn.click();
+            else passBtn.click();
+          } else {
+            // Incorrect answer - look for Close button
+            const closeBtns = Array.from(document.querySelectorAll('.mc-modal-answer .mc-modal-option'));
+            const closeBtn = closeBtns.find(btn => btn.textContent.trim() === 'Close');
+            if (closeBtn) {
+              closeBtn.click();
+            }
+          }
         }, d3);
       } else {
         // Single-answer: reveal, then mark correct/incorrect
