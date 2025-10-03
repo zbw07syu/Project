@@ -626,6 +626,12 @@
   // ----- Play/Preview View -----
   // Open the game selection modal instead of launching built-in play
   function startPlay(listId, asPreview = false) {
+    // Pause background music when starting to play
+    const audio = $('#bgAudio');
+    if (audio) {
+      audio.pause();
+    }
+    
     // Store selected list for game hand-off
     state.play.listId = listId;
     state.play.index = 0;
