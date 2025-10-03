@@ -113,12 +113,14 @@ function updateCursorForAI() {
 
 // Initialize global modal state for shared modal system
 window.modalState = 'closed'; // Track modal state: 'open', 'closing', 'closed'
+window.modalCallbackInProgress = false; // Track if modal callback is in progress
+window.pssTransitionInProgress = false; // Track if PSS transition is in progress
 let answerShown = false; // Track if answer has been shown for current question
 
 // Enhanced AI action coordination system
 let aiActionQueue = [];
 let aiActionScheduled = false;
-let lastModalCloseTime = 0;
+let lastModalCloseTime = Date.now(); // Initialize to current time to prevent immediate emergency triggers
 
 // Aggressive AI action monitor - runs every 2 seconds to catch stuck AI players
 let aiMonitorInterval = null;
@@ -280,10 +282,35 @@ function getAIState() {
   };
 }
 
+// Debug function to force progression when stuck in PSS
+function forceProgressPSS() {
+  console.log('🔧 Force progressing PSS phase');
+  console.log('Current state:', {
+    losers,
+    currentLoserIndex,
+    answerShown,
+    showNextOrEndInProgress,
+    questionText: questionDiv.textContent,
+    answerText: answerDiv.textContent
+  });
+  
+  // Reset stuck flags
+  showNextOrEndInProgress = false;
+  answerShown = true;
+  
+  // Force call showNextOrEnd
+  try {
+    showNextOrEnd();
+  } catch (error) {
+    console.error('Error in forceProgressPSS:', error);
+  }
+}
+
 // Make debug functions globally accessible
 window.resetAIState = resetAIState;
 window.getAIState = getAIState;
 window.scheduleAIAction = scheduleAIAction;
+window.forceProgressPSS = forceProgressPSS;
 
 // AI monitor enabled to catch stuck AI players
 startAIMonitor();
@@ -1553,6 +1580,10 @@ function resumeGamePhase() {
     const namesMap = getNamesMap();
     questionDiv.textContent = `${namesMap[nextPlayer.name] || nextPlayer.name}, roll the dice!`;
     
+    // Set isDiceTurn to true so AI can roll
+    isDiceTurn = true;
+    rollDiceBtn.disabled = false;
+    
     // Use scheduleAIAction for consistency
     if (isPlayerAI(nextPlayer)) {
       scheduleAIAction(nextPlayer, 'resumeGamePhase', 100);
@@ -1955,6 +1986,10 @@ function endMovementPhase() {
       currentPlayer = nextPeek;
       console.log('🔄 Set isDiceTurn=true for:', nextPeek.name, 'isAI:', isPlayerAI(nextPeek));
       
+      // Enable the roll button for both human and AI players
+      // (AI will disable it again when it starts its action)
+      rollDiceBtn.disabled = false;
+      
       // Add small delay to prevent race conditions between consecutive AI actions
       // This ensures the previous AI action has fully completed before starting the next one
       if (isPlayerAI(nextPeek)) {
@@ -1962,9 +1997,6 @@ function endMovementPhase() {
         // Use scheduleAIAction to properly handle queuing and race conditions
         // Increased delay to 200ms to ensure previous AI action has fully completed
         scheduleAIAction(nextPeek, 'endMovementPhase-next-player', 200);
-      } else {
-        // For human players, just enable the roll button
-        rollDiceBtn.disabled = false;
       }
       return;
     }
@@ -2499,9 +2531,17 @@ function showNextStep() {
       
       // Show answer in modal with close button
       if (window.MultipleChoiceModal) {
+        console.log('📝 Setting up modal answer display with callback');
         window.MultipleChoiceModal.showAnswerInModal(answerText, () => {
-          console.log('📝 Modal closed after showing answer');
-          showNextOrEnd();
+          console.log('📝 ✅ Modal callback executed - calling showNextOrEnd');
+          try {
+            showNextOrEnd();
+          } catch (error) {
+            console.error('❌ Error in showNextOrEnd callback:', error);
+            // Fallback: try to recover by resetting state
+            showNextOrEndInProgress = false;
+            setTimeout(() => showNextOrEnd(), 100);
+          }
         });
       }
     };
@@ -3506,5 +3546,5 @@ function resetAIState() {
   aiActionScheduled = false;
   pendingAIPlayer = null;
   aiActionQueue = [];
-  lastModalCloseTime = 0;
+  lastModalCloseTime = Date.now(); // Reset to current time, not 0
 }

@@ -272,8 +272,15 @@
       // Clear modal content
       const answerEl = modalContainer.querySelector('.mc-modal-answer');
       if (answerEl) {
-        answerEl.textContent = '';
+        // Use innerHTML to properly clear all child elements including buttons
+        answerEl.innerHTML = '';
         answerEl.classList.remove('show');
+      }
+      
+      // Also clear options
+      const optionsEl = modalContainer.querySelector('.mc-modal-options');
+      if (optionsEl) {
+        optionsEl.innerHTML = '';
       }
       
       // Clear focus from modal elements to prevent interference
@@ -312,6 +319,8 @@
   function showAnswerInModal(answerText, onClose, options = {}) {
     if (!modalContainer) return;
     
+    console.log('🔔 showAnswerInModal called with:', { answerText, hasCallback: !!onClose });
+    
     const answerEl = modalContainer.querySelector('.mc-modal-answer');
     const optionsEl = modalContainer.querySelector('.mc-modal-options');
     
@@ -319,8 +328,12 @@
       // Clear the options section
       optionsEl.innerHTML = '';
       
-      // Show the answer
-      answerEl.textContent = answerText;
+      // Clear any existing content in answer element (including old buttons)
+      answerEl.innerHTML = '';
+      
+      // Show the answer text
+      const answerTextNode = document.createTextNode(answerText);
+      answerEl.appendChild(answerTextNode);
       answerEl.classList.add('show');
       
       if (options.showCorrectIncorrect) {
@@ -356,17 +369,35 @@
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
         closeBtn.className = 'mc-modal-option';
-        closeBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 14px; margin-top: 15px; padding: 10px 20px; min-height: 40px;';
+        closeBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 14px; margin-top: 15px; padding: 10px 20px; min-height: 40px; display: block; width: 100%;';
         
         closeBtn.addEventListener('click', () => {
+          console.log('🔔 Modal Close button clicked');
           closeModal();
           if (onClose) {
-            setTimeout(() => onClose(), 200);
+            console.log('🔔 Scheduling callback execution in 500ms (after modal fully closes)');
+            setTimeout(() => {
+              console.log('🔔 Executing onClose callback now, modal state:', window.modalState);
+              try {
+                onClose();
+                console.log('🔔 ✅ Callback executed successfully');
+              } catch (error) {
+                console.error('❌ Error executing modal onClose callback:', error);
+              }
+            }, 500); // Increased from 200ms to 500ms to ensure modal is fully closed
+          } else {
+            console.warn('⚠️ No onClose callback provided to modal');
           }
         });
         
+        // Add a line break before the button
+        answerEl.appendChild(document.createElement('br'));
+        answerEl.appendChild(document.createElement('br'));
+        
         // Append close button to the answer container (below the answer text)
         answerEl.appendChild(closeBtn);
+        
+        console.log('🔔 Close button created and appended to modal');
       }
     }
   }
@@ -401,6 +432,15 @@
       createMultipleChoiceModal();
     }
 
+    console.log('🔔 showOptionsModal called, current modal state:', window.modalState);
+
+    // If modal is currently closing, wait for it to finish before opening again
+    if (window.modalState === 'closing') {
+      console.log('🔔 Modal is closing, waiting 400ms before opening new question');
+      setTimeout(() => showOptionsModal(question, options, callback), 400);
+      return;
+    }
+
     // Update modal state tracking
     if (window.modalState !== undefined) {
       window.modalState = 'opening';
@@ -415,7 +455,8 @@
     // Hide answer section initially (it will be shown after option selection)
     const answerEl = modalContainer.querySelector('.mc-modal-answer');
     if (answerEl) {
-      answerEl.textContent = '';
+      // Use innerHTML to properly clear all child elements including buttons
+      answerEl.innerHTML = '';
       answerEl.classList.remove('show');
     }
 
