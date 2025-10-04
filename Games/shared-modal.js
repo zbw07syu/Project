@@ -116,7 +116,7 @@
         padding: 0;
         width: 32px;
         height: 32px;
-        display: flex;
+        display: none;
         align-items: center;
         justify-content: center;
         border-radius: 50%;

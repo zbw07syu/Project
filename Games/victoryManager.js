@@ -1,7 +1,7 @@
 /**
  * Victory Manager - Shared victory celebration system for all Wingit! games
- * Provides 12 different visual effects and 10 victory music tracks
- * Randomly combines 2 visual effects + 1 music track per victory
+ * Provides 12 different visual effects and 12 victory music tracks
+ * Randomly combines 3 visual effects + 1 music track per victory
  */
 
 (function(window) {
@@ -24,7 +24,9 @@
     '../assets/audio/bgs.mp3',
     '../assets/audio/elvis.mp3',
     '../assets/audio/holiday.mp3',
-    '../assets/audio/axelf.mp3'
+    '../assets/audio/axelf.mp3',
+    '../assets/audio/boysareback.mp3',
+    '../assets/audio/aha.mp3'
   ];
 
   // Visual effect registry
@@ -94,7 +96,7 @@
   // ==================== MAIN API ====================
 
   /**
-   * Play victory sequence with 2 random visual effects + 1 random music track
+   * Play victory sequence with 3 random visual effects + 1 random music track
    * @param {Object} options - Configuration options
    * @param {boolean} options.muted - Whether audio should be muted
    * @param {Function} options.getMuteState - Function to get current mute state
@@ -182,9 +184,9 @@
     let selectedEffects = [];
     let selectedMusic = '';
 
-    // Select 2 unique visual effects
+    // Select 3 unique visual effects
     const shuffled = [...effectNames].sort(() => Math.random() - 0.5);
-    selectedEffects = shuffled.slice(0, 2);
+    selectedEffects = shuffled.slice(0, 3);
 
     // Select 1 music track
     selectedMusic = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];

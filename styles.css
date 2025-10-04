@@ -265,7 +265,7 @@ button.danger {
   align-items: center;
   justify-content: center;
   background: var(--bg);
-  padding: 20px;
+  padding: 10px 20px;
 }
 
 .homepage-content {
@@ -274,7 +274,7 @@ button.danger {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
 }
 
 .homepage-logo {

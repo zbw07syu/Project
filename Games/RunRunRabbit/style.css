@@ -329,6 +329,10 @@ canvas {
   line-height: 1.2;
 }
 
+#answer {
+  color: black;
+}
+
 /* Container for multiple-choice buttons */
 .controlsContainer {
   display: flex;
