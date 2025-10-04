@@ -1,8 +1,9 @@
 /*
-  Basic styling for the classroom question list manager.
-  - Bangers font applied globally
-  - Simple layout with header, views, modals, and controls
-  - Not fully polished; designed as a functional skeleton to extend
+  Styling for the classroom question list manager with homepage.
+  - Bangers font applied globally for retro arcade look
+  - Homepage with logo, buttons, and screenshots
+  - Question Editor with views, modals, and controls
+  - Vibrant colors and hover animations
 */
 
 :root {
@@ -14,6 +15,8 @@
   --primary-contrast: #00222e;
   --danger: #ff5a5a;
   --accent: #ffd166;
+  --homepage-btn: #ff6b35;
+  --homepage-btn-hover: #ff8555;
 }
 
 * {
@@ -98,6 +101,15 @@ button {
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 button.primary {
@@ -242,4 +254,125 @@ button.danger {
 .toast {
   position: fixed; right: 16px; bottom: 16px; background: #0f1827; color: var(--text);
   border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 10px 14px; z-index: 1100;
+}
+
+/* ============================================ */
+/* HOMEPAGE STYLES */
+/* ============================================ */
+.homepage-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 20px;
+}
+
+.homepage-content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.homepage-logo {
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.homepage-buttons {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.homepage-btn {
+  font-family: 'Bangers', sans-serif;
+  font-size: 28px;
+  letter-spacing: 1.5px;
+  padding: 20px 40px;
+  background: var(--homepage-btn);
+  color: var(--text);
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #c54a1f, 0 8px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.homepage-btn:hover {
+  background: var(--homepage-btn-hover);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 0 #c54a1f, 0 12px 25px rgba(0, 0, 0, 0.5);
+}
+
+.homepage-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #c54a1f, 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.homepage-screenshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.screenshot {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 3px solid var(--primary);
+  box-shadow: 0 4px 15px rgba(0, 194, 255, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.screenshot:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(0, 194, 255, 0.5);
+}
+
+/* Editor Container */
+.editor-container[hidden] {
+  display: none;
+}
+
+/* About Modal Styling */
+.about-modal {
+  text-align: center;
+}
+
+.about-message {
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 20px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .homepage-logo {
+    max-width: 280px;
+  }
+  
+  .homepage-btn {
+    font-size: 22px;
+    padding: 16px 32px;
+  }
+  
+  .homepage-screenshots {
+    grid-template-columns: 1fr;
+  }
 }

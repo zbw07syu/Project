@@ -2,14 +2,13 @@
 <html lang="en">
   <head>
     <!--
-      Basic web app skeleton for a classroom question list manager.
-      - Homepage with search, create, list management (Edit/Delete/Play)
-      - Create workflow via two modals (total count, then breakdown of single vs multiple)
-      - Editor view to fill questions
+      Classroom Question List Manager with Homepage
+      - Homepage with logo, navigation buttons, and game screenshots
+      - Question Editor for creating and managing question lists
       - Play/Preview view with simple controls
       - LocalStorage persistence
       - Background music with volume/mute controls
-      - Bangers font for playful look
+      - Bangers font for playful retro arcade look
     -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,25 +22,56 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <!-- Global audio (autoplay+loop). We try to start softly and allow user control. -->
+    <!-- ============================================ -->
+    <!-- AUDIO SETUP -->
+    <!-- ============================================ -->
+    <!-- Global audio (loop). Starts after first user interaction. -->
     <audio id="bgAudio" src="./Editor/billiejeanchiptune.mp3" loop></audio>
 
-    <header class="app-header">
-      <h1>Classroom Question Lists</h1>
-
-      <div class="header-controls">
-        <div class="data-controls">
-          <button id="exportDataBtn" class="ghost" title="Export all question lists">💾 Export</button>
-          <button id="importDataBtn" class="ghost" title="Import question lists">📥 Import</button>
+    <!-- ============================================ -->
+    <!-- HOMEPAGE -->
+    <!-- ============================================ -->
+    <div id="homepageContainer" class="homepage-container">
+      <div class="homepage-content">
+        <!-- Logo -->
+        <img src="./Wingit! Logo.png" alt="Wingit Logo" class="homepage-logo" />
+        
+        <!-- Navigation Buttons -->
+        <div class="homepage-buttons">
+          <button id="openEditorBtn" class="homepage-btn">Open Question Editor</button>
+          <button id="openAboutBtn" class="homepage-btn">About</button>
         </div>
-        <div class="audio-controls" title="Background music controls">
-          <button id="audioToggle" aria-label="Toggle mute">🔈</button>
-          <input id="audioVolume" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume" />
+        
+        <!-- Game Screenshots -->
+        <div class="homepage-screenshots">
+          <img src="./screenshot1.png" alt="Game Screenshot 1" class="screenshot" />
+          <img src="./screenshot2.png" alt="Game Screenshot 2" class="screenshot" />
+          <img src="./screenshot3.png" alt="Game Screenshot 3" class="screenshot" />
         </div>
       </div>
-    </header>
+    </div>
 
-    <main class="app-main">
+    <!-- ============================================ -->
+    <!-- QUESTION EDITOR -->
+    <!-- ============================================ -->
+    <div id="editorContainer" class="editor-container" hidden>
+      <header class="app-header">
+        <h1>Classroom Question Lists</h1>
+
+        <div class="header-controls">
+          <button id="backToHomepage" class="ghost" title="Back to Homepage">🏠 Home</button>
+          <div class="data-controls">
+            <button id="exportDataBtn" class="ghost" title="Export all question lists">💾 Export</button>
+            <button id="importDataBtn" class="ghost" title="Import question lists">📥 Import</button>
+          </div>
+          <div class="audio-controls" title="Background music controls">
+            <button id="audioToggle" aria-label="Toggle mute">🔈</button>
+            <input id="audioVolume" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume" />
+          </div>
+        </div>
+      </header>
+
+      <main class="app-main">
       <!-- HOME VIEW -->
       <section id="homeView" class="view">
         <div class="toolbar">
@@ -107,9 +137,12 @@
           <button id="nextQuestion" class="ghost">Next</button>
         </div>
       </section>
-    </main>
+      </main>
+    </div>
 
+    <!-- ============================================ -->
     <!-- MODALS -->
+    <!-- ============================================ -->
     <!-- Modal 1: total number of questions (and optional list name) -->
     <div id="modal1" class="modal" hidden>
       <div class="modal-content">
@@ -192,6 +225,17 @@
         <div class="modal-actions">
           <button id="gameSelectCancel" class="ghost">Cancel</button>
           <button id="gameSelectPlay" class="primary">Play</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal" hidden>
+      <div class="modal-content about-modal">
+        <h3>About</h3>
+        <p class="about-message">Dedicated to friends and ex-colleagues on the frontlines.</p>
+        <div class="modal-actions">
+          <button id="aboutCloseBtn" class="primary">Close</button>
         </div>
       </div>
     </div>

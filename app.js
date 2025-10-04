@@ -738,6 +738,8 @@
   }
 
   // ----- Audio Controls -----
+  let audioStarted = false;
+  
   function setupAudio() {
     const audio = $('#bgAudio');
     const vol = $('#audioVolume');
@@ -746,9 +748,13 @@
     // Initialize volume
     audio.volume = parseFloat(vol.value || '0.2');
 
-    // Try autoplay (many browsers require user interaction first)
-    const tryPlay = () => audio.play().catch(() => {/* will start after user interaction */});
-    tryPlay();
+    // Function to start audio on first user interaction
+    const tryPlay = () => {
+      if (!audioStarted) {
+        audio.play().catch(() => {/* will start after user interaction */});
+        audioStarted = true;
+      }
+    };
 
     vol.addEventListener('input', () => {
       audio.volume = parseFloat(vol.value);
@@ -763,14 +769,52 @@
       toggle.textContent = audio.muted ? '🔇' : '🔈';
     });
 
-    // On first user gesture, if not playing, attempt play
-    const resumeOnUser = () => {
-      if (audio.paused) tryPlay();
-      window.removeEventListener('pointerdown', resumeOnUser);
-      window.removeEventListener('keydown', resumeOnUser);
-    };
-    window.addEventListener('pointerdown', resumeOnUser);
-    window.addEventListener('keydown', resumeOnUser);
+    // Return the tryPlay function so it can be called from homepage buttons
+    return tryPlay;
+  }
+  
+  // ----- Homepage Navigation -----
+  function setupHomepage(tryPlayAudio) {
+    const homepageContainer = $('#homepageContainer');
+    const editorContainer = $('#editorContainer');
+    const openEditorBtn = $('#openEditorBtn');
+    const openAboutBtn = $('#openAboutBtn');
+    const backToHomepageBtn = $('#backToHomepage');
+    const aboutModal = $('#aboutModal');
+    const aboutCloseBtn = $('#aboutCloseBtn');
+    
+    // Open Question Editor
+    openEditorBtn.addEventListener('click', () => {
+      tryPlayAudio(); // Start audio on first interaction
+      homepageContainer.hidden = true;
+      editorContainer.hidden = false;
+    });
+    
+    // Open About Modal
+    openAboutBtn.addEventListener('click', () => {
+      tryPlayAudio(); // Start audio on first interaction
+      aboutModal.hidden = false;
+    });
+    
+    // Close About Modal
+    aboutCloseBtn.addEventListener('click', () => {
+      aboutModal.hidden = true;
+    });
+    
+    // Close About Modal when clicking outside
+    aboutModal.addEventListener('click', (e) => {
+      if (e.target === aboutModal) {
+        aboutModal.hidden = true;
+      }
+    });
+    
+    // Back to Homepage
+    backToHomepageBtn.addEventListener('click', () => {
+      editorContainer.hidden = true;
+      homepageContainer.hidden = false;
+      showView('home');
+      renderHome();
+    });
   }
 
   // ----- Event Wiring -----
@@ -1094,8 +1138,9 @@
 
   // ----- App Init -----
   function init() {
+    const tryPlayAudio = setupAudio();
+    setupHomepage(tryPlayAudio);
     wireEvents();
-    setupAudio();
     showView('home');
     renderHome();
   }
