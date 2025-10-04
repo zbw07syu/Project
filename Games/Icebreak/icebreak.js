@@ -640,6 +640,7 @@
 
   muteBtn.addEventListener('click', () => {
     bgMusic.muted = !bgMusic.muted;
+    winSfx.muted = bgMusic.muted; // Also mute/unmute victory music
     muteBtn.textContent = bgMusic.muted ? 'Unmute Music' : 'Mute Music';
   });
 
