@@ -698,6 +698,11 @@ function resizeConfettiCanvas(canvas) {
 function toggleMusic() {
   musicMuted = !musicMuted;
   
+  // Notify Victory Manager of mute state change
+  if (typeof VictoryManager !== 'undefined') {
+    VictoryManager.updateMuteState(musicMuted);
+  }
+  
   if (musicMuted) {
     // Mute both background music and victory music
     bgMusic.pause();
@@ -706,10 +711,8 @@ function toggleMusic() {
     // Unmute - play appropriate music based on game state
     const victoryShowing = document.querySelector('.victory-text');
     if (victoryShowing) {
-      // Game is over - play victory music
-      if (victorySfx) {
-        victorySfx.play().catch(() => {});
-      }
+      // Game is over - Victory Manager handles victory music
+      // Old fallback: if (victorySfx) victorySfx.play().catch(() => {});
     } else {
       // Game is ongoing - play background music
       bgMusic.play().catch(() => {});
@@ -717,10 +720,16 @@ function toggleMusic() {
   }
 }
 
+
 function restartGame() {
+  // Stop Victory Manager effects
+  if (typeof VictoryManager !== 'undefined') {
+    VictoryManager.stopVictorySequence();
+  }
   stopVictoryEffects();
   location.reload();
 }
+
 
 // ==== AI TURN LOGIC ====
 function triggerAITurnIfNeeded() {

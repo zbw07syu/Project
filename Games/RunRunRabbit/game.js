@@ -540,6 +540,11 @@ muteBtn.addEventListener("click", () => {
   loseSound.muted = isMuted;
   victoryMusic.muted = isMuted;
 
+  // Update Victory Manager mute state
+  if (window.VictoryManager) {
+    window.VictoryManager.updateMuteState(isMuted);
+  }
+
   muteBtn.textContent = isMuted ? "Unmute" : "Mute";
 });
 
@@ -1631,16 +1636,13 @@ function declareVictory(winnerName, points) {
   // Also clear dice queue so no further turns resume
   diceQueue = [];
 
-  triggerVictoryCelebration();
-
-  // Smoothly fade out background music, then start victory music
+  // Use new Victory Manager
   fadeOutAudio(bgMusic, 800, 0, () => {
-    victoryMusic.pause();
-    victoryMusic.currentTime = 0;
-    victoryMusic.volume = 0.3; // match previous loudness
-    victoryMusic.play().catch(err => {
-      console.log("Victory music playback was blocked:", err);
-    });
+    if (window.VictoryManager) {
+      window.VictoryManager.playVictorySequence({
+        getMuteState: () => isMuted
+      });
+    }
   });
 
   endMatch();
@@ -3184,13 +3186,18 @@ function nextPSSHuman() {
 
 // ----- Reset -----
 function reset() {
-  // 🛑 Stop victory music if it's playing
+  // 🛑 Stop victory effects using Victory Manager
+  if (window.VictoryManager) {
+    window.VictoryManager.stopVictorySequence();
+  }
+
+  // Stop old victory music if it's playing
   if (!victoryMusic.paused) {
     victoryMusic.pause();
     victoryMusic.currentTime = 0;
   }
 
-  // Clear any celebration effects
+  // Clear any old celebration effects
   stopCelebrationEffects();
 
   // Clear victory lock to allow UI updates again

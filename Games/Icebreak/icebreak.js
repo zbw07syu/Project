@@ -555,9 +555,24 @@
     feedbackEl.textContent = `Game over! Winner${winners.length > 1 ? 's' : ''}: ${winnerNames} with ${victoryScore} points.`;
 
     highlightWinningTeam();
-    launchConfetti();
-    startStrobe();
-    playWinMusic();
+    
+    // Stop background music before victory celebration
+    if (bgMusic) {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+    }
+    
+    // Use Victory Manager for enhanced celebration
+    if (typeof VictoryManager !== 'undefined') {
+      VictoryManager.playVictorySequence({
+        getMuteState: () => bgMusic.muted
+      });
+    } else {
+      // Fallback to old celebration if Victory Manager not loaded
+      launchConfetti();
+      startStrobe();
+      playWinMusic();
+    }
   }
 
   function playWinMusic() {
@@ -642,9 +657,18 @@
     bgMusic.muted = !bgMusic.muted;
     winSfx.muted = bgMusic.muted; // Also mute/unmute victory music
     muteBtn.textContent = bgMusic.muted ? 'Unmute Music' : 'Mute Music';
+    
+    // Notify Victory Manager of mute state change
+    if (typeof VictoryManager !== 'undefined') {
+      VictoryManager.updateMuteState(bgMusic.muted);
+    }
   });
 
   restartBtn.addEventListener('click', () => {
+    // Stop Victory Manager effects
+    if (typeof VictoryManager !== 'undefined') {
+      VictoryManager.stopVictorySequence();
+    }
     stopConfetti();
     stopStrobe();
     location.reload();
