@@ -870,12 +870,8 @@ document.addEventListener("DOMContentLoaded", () => {
         questions = normalized;
         // Build a cycle key per list id if available
         if (payload.id) {
-          window.__TORNADO_CYCLE_KEY__ = `tornado_cycle_${payload.id}`;
-        }
-        // Update title to reflect list name
-        if (payload.name) {
-          const title = document.getElementById('gameTitle');
-          if (title) title.textContent = `Tornado — ${payload.name}`;
+        // Keep title as just "Tornado" for cleaner look
+        // (removed dynamic title update)
         }
       }
     }
