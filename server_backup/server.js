@@ -3,8 +3,18 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const OpenAI = require('openai');
 
-// Load environment variables
-dotenv.config();
+
+// Load environment variables from .env file if
+// not in production. In production, environment
+// variables are loaded from fly.io:
+//  - for secrets, these are stored using the `fly secrets`:
+//      https://fly.io/docs/apps/secrets/
+//  - for normal config, these are in the `fly.toml` file
+//
+// When running locally, these are loaded from the .env file.
+if (!process.env.DEPLOYMENT || process.env.DEPLOYMENT !== 'production') {
+    dotenv.config();
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
