@@ -2486,6 +2486,31 @@ function showNextStep() {
     if (window.MultipleChoiceModal) {
       window.MultipleChoiceModal.createModal();
     }
+    
+    // Check if current loser is AI BEFORE showing modal
+    const currentLoser = losers[currentLoserIndex];
+    const loserPlayer = players.find(p => p.name === currentLoser);
+    const isHumanLoser = (loserPlayer?.isHuman) || humanTeams.has(currentLoser);
+    
+    console.log('🤖 AI Auto-Selection Debug (EARLY CHECK):', {
+      currentLoser,
+      loserPlayer,
+      isHumanByProperty: loserPlayer?.isHuman,
+      isHumanBySet: humanTeams.has(currentLoser),
+      isHumanLoser,
+      hasOptions,
+      humanTeams: Array.from(humanTeams),
+      allPlayers: players.map(p => ({ name: p.name, isHuman: p.isHuman })),
+      modalState: window.modalState
+    });
+    
+    // If AI player, close any open modal immediately
+    if (!isHumanLoser) {
+      console.log('🤖 AI player detected - closing any open modal');
+      if (window.MultipleChoiceModal && window.modalState !== 'closed') {
+        window.MultipleChoiceModal.closeModal();
+      }
+    }
 
     // Handle option selection
     const handleOptionSelect = (selectedOption, index) => {
@@ -2546,22 +2571,7 @@ function showNextStep() {
       }
     };
 
-    // Check if current loser is AI and auto-select option
-    const currentLoser = losers[currentLoserIndex];
-    const loserPlayer = players.find(p => p.name === currentLoser);
-    const isHumanLoser = (loserPlayer?.isHuman) || humanTeams.has(currentLoser);
-    
-    console.log('🤖 AI Auto-Selection Debug:', {
-      currentLoser,
-      loserPlayer,
-      isHumanByProperty: loserPlayer?.isHuman,
-      isHumanBySet: humanTeams.has(currentLoser),
-      isHumanLoser,
-      hasOptions,
-      humanTeams: Array.from(humanTeams),
-      allPlayers: players.map(p => ({ name: p.name, isHuman: p.isHuman }))
-    });
-    
+    // AI check was moved earlier - now just use the isHumanLoser variable
     if (!isHumanLoser && hasOptions) {
       // AI player - skip modal entirely and auto-select immediately
       const aiDelay = Math.max(200, 800 / (AI_SPEED || 1));
@@ -2616,6 +2626,20 @@ function showNextStep() {
     
     const currentLoser = losers[currentLoserIndex];
     const isHumanLoser = (players.find(p => p.name === currentLoser)?.isHuman) || humanTeams.has(currentLoser);
+    
+    console.log('🤖 Open-answer AI check:', {
+      currentLoser,
+      isHumanLoser,
+      modalState: window.modalState
+    });
+    
+    // If AI player, close any open modal immediately
+    if (!isHumanLoser) {
+      console.log('🤖 AI player (open-answer) detected - closing any open modal');
+      if (window.MultipleChoiceModal && window.modalState !== 'closed') {
+        window.MultipleChoiceModal.closeModal();
+      }
+    }
     
     if (!isHumanLoser) {
       // AI player - auto-show answer after delay
