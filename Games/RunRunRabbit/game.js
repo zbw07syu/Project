@@ -2656,26 +2656,80 @@ function showNextStep() {
       if (window.MultipleChoiceModal) {
         console.log('🔔 Showing open-answer modal for human player');
         
-        // Use the showOpenAnswerModal function to display question with "Show Answer" button
+        // Show question in modal with "Show Answer" button
         const alt = Array.isArray(currentQuestion.alternates) ? currentQuestion.alternates.filter(a => a && a.trim() !== '') : [];
         
-        window.MultipleChoiceModal.showOpenAnswerModal(
-          currentQuestion.text,
-          currentQuestion.answer,
-          alt,
-          {
-            onCorrect: () => {
-              console.log('📝 Open-answer marked correct, calling showNextOrEnd');
-              answerShown = true;
-              showNextOrEnd();
-            },
-            onIncorrect: () => {
-              console.log('📝 Open-answer marked incorrect, calling showNextOrEnd');
-              answerShown = true;
-              showNextOrEnd();
-            }
+        // Create modal manually to avoid Correct/Incorrect buttons
+        window.MultipleChoiceModal.createModal();
+        
+        const modalContainer = document.getElementById('mc-modal-container');
+        if (modalContainer) {
+          // Set question text
+          const questionEl = modalContainer.querySelector('.mc-modal-question');
+          questionEl.textContent = currentQuestion.text || '';
+          
+          // Hide answer section initially
+          const answerEl = modalContainer.querySelector('.mc-modal-answer');
+          if (answerEl) {
+            answerEl.textContent = '';
+            answerEl.classList.remove('show');
           }
-        );
+          
+          // Create "Show Answer" button
+          const optionsEl = modalContainer.querySelector('.mc-modal-options');
+          optionsEl.innerHTML = '';
+          
+          const showAnswerBtn = document.createElement('button');
+          showAnswerBtn.textContent = 'Show Answer';
+          showAnswerBtn.className = 'mc-modal-option answer-btn';
+          showAnswerBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 18px;';
+          
+          showAnswerBtn.addEventListener('click', () => {
+            console.log('🔔 Show Answer clicked');
+            
+            // Build answer text with alternates
+            const altSuffix = alt.length ? `\n(Also accepted: ${alt.join(', ')})` : '';
+            const answerText = `Answer: ${currentQuestion.answer}${altSuffix}`;
+            
+            // Clear options and show answer with Continue button
+            optionsEl.innerHTML = '';
+            answerEl.innerHTML = '';
+            
+            const answerTextNode = document.createTextNode(answerText);
+            answerEl.appendChild(answerTextNode);
+            answerEl.classList.add('show');
+            
+            // Create Continue button
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = 'Continue';
+            continueBtn.className = 'mc-modal-option';
+            continueBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
+            
+            continueBtn.addEventListener('click', () => {
+              console.log('📝 Continue clicked, calling showNextOrEnd');
+              window.MultipleChoiceModal.closeModal();
+              setTimeout(() => {
+                answerShown = true;
+                showNextOrEnd();
+              }, 300);
+            });
+            
+            answerEl.appendChild(document.createElement('br'));
+            answerEl.appendChild(document.createElement('br'));
+            answerEl.appendChild(continueBtn);
+            
+            // Focus the continue button
+            setTimeout(() => continueBtn.focus(), 100);
+          });
+          
+          optionsEl.appendChild(showAnswerBtn);
+          
+          // Show modal
+          modalContainer.classList.add('show');
+          
+          // Focus the show answer button
+          setTimeout(() => showAnswerBtn.focus(), 100);
+        }
       } else {
         // Fallback to original behavior
         const showAnswerBtn = document.createElement("button");
