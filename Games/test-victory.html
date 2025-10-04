@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victory Manager Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #ffd54a;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #ffd54a;
+            color: #000;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #ffca28;
+            transform: scale(1.05);
+        }
+        button.stop {
+            background: #ff6b6b;
+            color: white;
+        }
+        button.stop:hover {
+            background: #ff5252;
+        }
+        button.mute {
+            background: #5cd0ff;
+        }
+        button.mute:hover {
+            background: #4fc3f7;
+        }
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .effect-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .effect-item {
+            background: rgba(255, 213, 74, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .status {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(92, 208, 255, 0.2);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Victory Manager Test Suite 🎉</h1>
+        
+        <div class="info">
+            <h2>Instructions:</h2>
+            <p>Click "Start Victory Sequence" to trigger a random combination of 2 visual effects and 1 music track.</p>
+            <p>Effects will run indefinitely until you click "Stop Victory Sequence".</p>
+            <p>Toggle mute to test audio control during playback.</p>
+        </div>
+
+        <div class="controls">
+            <button onclick="startVictory()">🎊 Start Victory Sequence</button>
+            <button class="stop" onclick="stopVictory()">⏹️ Stop Victory Sequence</button>
+            <button class="mute" onclick="toggleMute()">🔊 Toggle Mute</button>
+        </div>
+
+        <div class="status" id="status">
+            Ready to test! Click "Start Victory Sequence" to begin.
+        </div>
+
+        <div class="info">
+            <h2>Available Visual Effects (12):</h2>
+            <div class="effect-list">
+                <div class="effect-item">🎊 Confetti</div>
+                <div class="effect-item">💡 Slow Strobe</div>
+                <div class="effect-item">✨ Sparkles</div>
+                <div class="effect-item">🎆 Fireworks</div>
+                <div class="effect-item">🔦 Colored Spotlight</div>
+                <div class="effect-item">🌟 Pulsing Glow</div>
+                <div class="effect-item">⭐ Floating Stars</div>
+                <div class="effect-item">🌊 Screen Ripple</div>
+                <div class="effect-item">🌀 Particle Swirl</div>
+                <div class="effect-item">👑 Gold Overlay</div>
+                <div class="effect-item">📳 Camera Shake</div>
+                <div class="effect-item">💥 Light Burst</div>
+            </div>
+        </div>
+
+        <div class="info">
+            <h2>Available Music Tracks (3):</h2>
+            <div class="effect-list">
+                <div class="effect-item">🎵 Move On Up</div>
+                <div class="effect-item">🎮 Celebration Chiptune</div>
+                <div class="effect-item">🏆 We Are The Champions</div>
+            </div>
+        </div>
+
+        <div class="info">
+            <h2>Test Log:</h2>
+            <div id="log" style="font-family: monospace; font-size: 14px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script src="victoryManager.js"></script>
+    <script>
+        let isMuted = false;
+        let testCount = 0;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `[${timestamp}] ${message}<br>` + logDiv.innerHTML;
+        }
+
+        function updateStatus(message, color = '#5cd0ff') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.background = `rgba(${color === '#5cd0ff' ? '92, 208, 255' : color === '#4caf50' ? '76, 175, 80' : '255, 107, 107'}, 0.2)`;
+        }
+
+        function startVictory() {
+            testCount++;
+            log(`Test #${testCount}: Starting victory sequence...`);
+            updateStatus(`🎉 Victory sequence active! (Test #${testCount})`, '#4caf50');
+            
+            try {
+                VictoryManager.playVictorySequence({
+                    getMuteState: () => isMuted
+                });
+                log(`✅ Victory sequence started successfully`);
+            } catch (error) {
+                log(`❌ Error starting victory: ${error.message}`);
+                updateStatus('Error starting victory sequence', '#ff6b6b');
+            }
+        }
+
+        function stopVictory() {
+            log('Stopping victory sequence...');
+            updateStatus('⏹️ Victory sequence stopped', '#5cd0ff');
+            
+            try {
+                VictoryManager.stopVictorySequence();
+                log('✅ Victory sequence stopped successfully');
+            } catch (error) {
+                log(`❌ Error stopping victory: ${error.message}`);
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            log(`${isMuted ? '🔇 Muted' : '🔊 Unmuted'}`);
+            updateStatus(`Audio is now ${isMuted ? 'MUTED 🔇' : 'UNMUTED 🔊'}`, isMuted ? '#ff6b6b' : '#4caf50');
+            
+            try {
+                VictoryManager.updateMuteState(isMuted);
+                log('✅ Mute state updated in Victory Manager');
+            } catch (error) {
+                log(`❌ Error updating mute state: ${error.message}`);
+            }
+        }
+
+        // Log initial state
+        log('Victory Manager Test Suite loaded');
+        log('Victory Manager available: ' + (typeof VictoryManager !== 'undefined' ? 'YES ✅' : 'NO ❌'));
+        
+        if (typeof VictoryManager !== 'undefined') {
+            log('Ready to test 198 possible victory combinations!');
+        }
+    </script>
+</body>
+</html>
