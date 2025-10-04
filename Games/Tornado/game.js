@@ -571,13 +571,23 @@ function checkGameEnd() {
         bgMusic.currentTime = 0;
         bgMusic.loop = false;
       }
-      if (victorySfx && !musicMuted) {
-        victorySfx.currentTime = 0;
-        victorySfx.play().catch(() => {});
-      }
     } catch {}
 
-    triggerVictoryCelebration();
+    // Use Victory Manager for enhanced celebration
+    if (typeof VictoryManager !== 'undefined') {
+      VictoryManager.playVictorySequence({
+        getMuteState: () => musicMuted
+      });
+    } else {
+      // Fallback to old celebration if Victory Manager not loaded
+      triggerVictoryCelebration();
+      try {
+        if (victorySfx && !musicMuted) {
+          victorySfx.currentTime = 0;
+          victorySfx.play().catch(() => {});
+        }
+      } catch {}
+    }
 
     // Disable grid
     gridOrder.forEach(num => {

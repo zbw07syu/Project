@@ -13,7 +13,7 @@
   let lastCombination = null;
   let isMuted = false;
   
-  // Music tracks (relative to Games directory)
+  // Music tracks (relative to the HTML file loading this script)
   const MUSIC_TRACKS = [
     '../assets/audio/moveonup.mp3',
     '../assets/audio/Celebrationchiptune.mp3',
