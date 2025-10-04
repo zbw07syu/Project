@@ -278,7 +278,7 @@ button.danger {
 }
 
 .homepage-logo {
-  max-width: 400px;
+  max-width: 800px;
   width: 100%;
   height: auto;
   animation: float 3s ease-in-out infinite;
@@ -364,7 +364,7 @@ button.danger {
 /* Responsive Design */
 @media (max-width: 768px) {
   .homepage-logo {
-    max-width: 280px;
+    max-width: 560px;
   }
   
   .homepage-btn {
