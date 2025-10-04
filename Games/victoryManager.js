@@ -106,7 +106,7 @@
       // Get mute state
       isMuted = options.muted || (options.getMuteState && options.getMuteState()) || false;
 
-      // Select 2 unique visual effects and 1 music track
+      // Select 3 unique visual effects and 1 music track
       const combination = selectRandomCombination();
       
       // Start visual effects
