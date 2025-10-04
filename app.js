@@ -27,7 +27,7 @@
 (function () {
   console.log('✅ Question List Manager - app.js loaded successfully');
 
-  const GENERATOR_URL = 'http://localhost:3001/generate';
+  var GENERATOR_URL = 'http://localhost:3001/generate';
   if (window.location.hostname === 'wingit.games' || window.location.hostname == 'zbw07syu.github.io') {
       GENERATOR_URL = 'https://wingit-question-generator.fly.dev/generate';
   }
