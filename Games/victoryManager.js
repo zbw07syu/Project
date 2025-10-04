@@ -1,6 +1,6 @@
 /**
  * Victory Manager - Shared victory celebration system for all Wingit! games
- * Provides 12 different visual effects and 3 victory music tracks
+ * Provides 12 different visual effects and 10 victory music tracks
  * Randomly combines 2 visual effects + 1 music track per victory
  */
 
@@ -17,7 +17,14 @@
   const MUSIC_TRACKS = [
     '../assets/audio/moveonup.mp3',
     '../assets/audio/Celebrationchiptune.mp3',
-    '../assets/audio/wearethechampions.mp3'
+    '../assets/audio/wearethechampions.mp3',
+    '../assets/audio/astley.mp3',
+    '../assets/audio/gthang.mp3',
+    '../assets/audio/cindi.mp3',
+    '../assets/audio/bgs.mp3',
+    '../assets/audio/elvis.mp3',
+    '../assets/audio/holiday.mp3',
+    '../assets/audio/axelf.mp3'
   ];
 
   // Visual effect registry
