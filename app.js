@@ -26,6 +26,11 @@
 
 (function () {
   console.log('✅ Question List Manager - app.js loaded successfully');
+
+  const GENERATOR_URL = 'http://localhost:3001/generate';
+  if (window.location.hostname === 'wingit.games' || window.location.hostname == 'zbw07syu.github.io') {
+      GENERATOR_URL = 'https://wingit-question-generator.fly.dev/generate';
+  }
   
   // ----- Utilities -----
   const uid = () => Math.random().toString(36).slice(2, 9);
@@ -1043,7 +1048,7 @@
       generateBtn.disabled = true;
 
       try {
-        const response = await fetch('http://localhost:3001/generate', {
+        const response = await fetch(GENERATOR_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1,10 +1,15 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Start the Question Generator Server
 echo "Starting Question Generator Server..."
 
+# Get the folder that this script is in. It lives in the root of of the project
+# directory so we can use this as the project directory.
+PROJECT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 # Set up Node.js path (use local node if available, otherwise system node)
-PROJECT_DIR="/Users/apple/Desktop/Project"
 if [ -f "$PROJECT_DIR/node/bin/node" ]; then
     NODE_BIN="$PROJECT_DIR/node/bin/node"
     echo "Using local Node.js: $NODE_BIN"
@@ -18,7 +23,7 @@ else
 fi
 
 # Change to server directory
-cd /Users/apple/Desktop/Project/server_backup
+cd "$PROJECT_DIR"/server_backup
 
 # Check if .env file exists
 if [ ! -f .env ]; then
