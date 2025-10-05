@@ -349,24 +349,18 @@
         incorrectBtn.style.cssText = 'background: linear-gradient(135deg, #f44336, #da190b); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
         
         correctBtn.addEventListener('click', () => {
-          // CRITICAL FIX: Save the callback BEFORE closing modal
-          const savedCorrectCallback = options.onCorrect;
-          
-          closeModal();
-          
-          if (savedCorrectCallback) {
-            setTimeout(() => savedCorrectCallback(), 200);
+          console.log('🔔 Modal system: Correct button clicked');
+          // Don't close modal - let the callback handle the next modal state
+          if (options.onCorrect) {
+            options.onCorrect();
           }
         });
         
         incorrectBtn.addEventListener('click', () => {
-          // CRITICAL FIX: Save the callback BEFORE closing modal
-          const savedIncorrectCallback = options.onIncorrect;
-          
-          closeModal();
-          
-          if (savedIncorrectCallback) {
-            setTimeout(() => savedIncorrectCallback(), 200);
+          console.log('🔔 Modal system: Incorrect button clicked');
+          // Don't close modal - let the callback handle the next modal state
+          if (options.onIncorrect) {
+            options.onIncorrect();
           }
         });
         
@@ -601,6 +595,14 @@
    */
   function showContinuePassModal(message, callbacks = {}) {
     if (!modalContainer) return;
+    
+    console.log('🔔 showContinuePassModal called with:', { message, hasContinue: !!callbacks.onContinue, hasPass: !!callbacks.onPass });
+    
+    // Ensure modal is visible
+    modalContainer.classList.add('show');
+    if (window.modalState !== undefined) {
+      window.modalState = 'open';
+    }
     
     const answerEl = modalContainer.querySelector('.mc-modal-answer');
     const optionsEl = modalContainer.querySelector('.mc-modal-options');
