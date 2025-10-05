@@ -22,7 +22,7 @@ const scoresList = document.getElementById('scores');
 
 // Confetti canvas and particle state (shared celebration effect)
 const confettiCanvas = document.getElementById('confettiCanvas');
-const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d', { alpha: true }) : null;
 const strobeOverlay = document.getElementById('strobeOverlay');
 const confettiParticles = [];
 let confettiAnimationId = null;
@@ -34,6 +34,10 @@ function resizeConfettiCanvas() {
   if (!confettiCanvas) return;
   confettiCanvas.width = window.innerWidth;
   confettiCanvas.height = window.innerHeight;
+  // Ensure canvas remains transparent after resize
+  if (confettiCtx) {
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
 }
 
 if (confettiCanvas) {
@@ -100,7 +104,10 @@ let gamePhase = 'pss'; // Track current game phase: 'pss', 'dice', 'movement'
 
 // Function to update cursor and UI based on AI action state
 function updateCursorForAI() {
-  if (aiActionInProgress) {
+  // Only show hourglass cursor if AI action is in progress AND current player is AI
+  const shouldShowWaitCursor = aiActionInProgress && currentPlayer && isPlayerAI(currentPlayer);
+  
+  if (shouldShowWaitCursor) {
     document.body.style.cursor = 'wait';
     if (canvas) canvas.style.pointerEvents = 'none';
     if (rollDiceBtn) rollDiceBtn.style.cursor = 'not-allowed';

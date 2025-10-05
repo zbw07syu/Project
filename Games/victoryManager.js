@@ -252,7 +252,7 @@
   
   function startConfetti() {
     confettiCanvas = getOrCreateCanvas('victoryConfettiCanvas');
-    confettiCtx = confettiCanvas.getContext('2d');
+    confettiCtx = confettiCanvas.getContext('2d', { alpha: true });
     confettiParticles = [];
 
     const colors = ['#ffd54a', '#5cd0ff', '#ff6b6b', '#a5d6a7', '#ffffff', '#ff9800', '#9c27b0'];
@@ -336,7 +336,7 @@
 
   function startSparkles() {
     sparklesCanvas = getOrCreateCanvas('victorySparklesCanvas');
-    sparklesCtx = sparklesCanvas.getContext('2d');
+    sparklesCtx = sparklesCanvas.getContext('2d', { alpha: true });
     sparklesParticles = [];
 
     for (let i = 0; i < 50; i++) {
@@ -401,7 +401,7 @@
 
   function startFireworks() {
     fireworksCanvas = getOrCreateCanvas('victoryFireworksCanvas');
-    fireworksCtx = fireworksCanvas.getContext('2d');
+    fireworksCtx = fireworksCanvas.getContext('2d', { alpha: true });
     fireworksParticles = [];
 
     function createFirework() {
@@ -538,7 +538,7 @@
 
   function startFloatingStars() {
     starsCanvas = getOrCreateCanvas('victoryStarsCanvas');
-    starsCtx = starsCanvas.getContext('2d');
+    starsCtx = starsCanvas.getContext('2d', { alpha: true });
     starsParticles = [];
 
     for (let i = 0; i < 30; i++) {
@@ -643,7 +643,7 @@
 
   function startParticleSwirl() {
     swirlCanvas = getOrCreateCanvas('victorySwirlCanvas');
-    swirlCtx = swirlCanvas.getContext('2d');
+    swirlCtx = swirlCanvas.getContext('2d', { alpha: true });
     swirlParticles = [];
 
     const centerX = swirlCanvas.width / 2;
@@ -762,7 +762,7 @@
 
   function startLightBurst() {
     burstCanvas = getOrCreateCanvas('victoryBurstCanvas');
-    burstCtx = burstCanvas.getContext('2d');
+    burstCtx = burstCanvas.getContext('2d', { alpha: true });
     let time = 0;
 
     function animate() {
@@ -870,7 +870,7 @@
     textParticleCanvas.style.zIndex = '9999'; // Just behind text
     textParticleCanvas.width = window.innerWidth;
     textParticleCanvas.height = window.innerHeight;
-    textParticleCtx = textParticleCanvas.getContext('2d');
+    textParticleCtx = textParticleCanvas.getContext('2d', { alpha: true });
     document.body.appendChild(textParticleCanvas);
 
     // Initialize particles

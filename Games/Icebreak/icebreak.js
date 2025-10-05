@@ -30,7 +30,7 @@
   const incorrectSfx = document.getElementById('incorrectSfx');
   const winSfx = document.getElementById('winSfx');
   const confettiCanvas = document.getElementById('confettiCanvas');
-  const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+  const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d', { alpha: true }) : null;
   const strobeOverlay = document.getElementById('strobeOverlay');
 
   const muteBtn = document.getElementById('muteBtn');
