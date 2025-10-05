@@ -721,6 +721,8 @@ let pssIndex = 0;  // Tracks whose turn it is
 let rabbitRoundCounter = 0; // increment each dice phase
 // If set, force this player to roll next (used by respawn-on-roll-again)
 let forcedNextPlayerName = null;
+// Flag to indicate automatic roll is in progress after respawn
+let autoRollInProgress = false;
 
 // Assuming your player objects have a `name` property
 let pssOrder;
@@ -789,7 +791,7 @@ function respawnRabbit(rabbitObj) {
     showedSpecialMsg = true;
   }
 
-  // If landing on a roll-again tile at respawn, consume it and force an immediate extra roll on next resume
+  // If landing on a roll-again tile at respawn, consume it and trigger automatic roll
   const tileIdx = rollAgainTiles.findIndex(t => t.x === rabbitObj.x && t.y === rabbitObj.y);
   if (tileIdx >= 0) {
     rollAgainTiles.splice(tileIdx, 1);
@@ -798,8 +800,19 @@ function respawnRabbit(rabbitObj) {
     const wrapperForExtra = players.find(p => p.obj === rabbitObj);
     if (wrapperForExtra) {
       showRollAgainToast();
-      // Signal resumeGamePhase to give this player an immediate roll
-      forcedNextPlayerName = wrapperForExtra.name;
+      // Set flag to prevent resumeGamePhase from interfering
+      autoRollInProgress = true;
+      // Trigger automatic roll after a short delay (similar to normal gameplay)
+      setTimeout(() => {
+        // Set this player as current and trigger dice roll
+        currentPlayer = wrapperForExtra;
+        isDiceTurn = true;
+        startDiceMove(wrapperForExtra);
+        // For AI, auto-choose a square; for humans, highlights will show
+        maybeAutoRollFollowupMove(wrapperForExtra);
+        // Clear flag after roll is initiated
+        autoRollInProgress = false;
+      }, 350);
     }
     showedSpecialMsg = true;
   }
@@ -1523,6 +1536,9 @@ function showPSSControls() {
 // ----- Resume dice queue or PSS -----
 function resumeGamePhase() {
   if (questionDiv.dataset && questionDiv.dataset.victory === 'true') return;
+  
+  // If automatic roll is in progress after respawn, skip resumeGamePhase
+  if (autoRollInProgress) return;
 
   // If a respawn forced an immediate roll but the queue is empty, seed the queue
   if (forcedNextPlayerName && (!diceQueue || diceQueue.length === 0)) {
