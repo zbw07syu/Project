@@ -552,7 +552,7 @@ function checkGameEnd() {
 
     let winnerText = '';
     if (winners.length === 1) winnerText = `Team ${winners[0] + 1} are the winners!`;
-    else winnerText = `It's a tie between ${winners.map(i => `Team ${i + 1}`).join(', ')}!`;
+    else winnerText = "It's a tie!";
 
     // Clear the questionDiv before showing victory message
     questionDiv.textContent = "";

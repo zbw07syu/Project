@@ -559,7 +559,7 @@
     if (winners.length === 1) {
       // Single winner
       const winnerIndex = teams.findIndex(t => t.name === winners[0].name);
-      winnerText = `Team ${winnerIndex + 1} is the winner!`;
+      winnerText = `Team ${winnerIndex + 1} are the winners!`;
       winnerColor = (winnerIndex >= 0 && winnerIndex < teamColors.length) ? teamColors[winnerIndex] : '#FFD700';
     } else {
       // Tie

@@ -3496,11 +3496,23 @@ function maybeAutoPlayPSS() {
     if (!pssResolved) {
       const currentIsHuman = players.find(p => p.name === pssHuman)?.isHuman;
       if (currentIsHuman) return;
+      
+      // Set AI action flag and update cursor for PSS button clicking
+      aiActionInProgress = true;
+      updateCursorForAI();
+      
       const d = Math.max(100, 600 / (AI_SPEED || 1));
-      pssAITimeouts.push(setTimeout(() => handlePSSMove(randomPSSMove()), d));
+      pssAITimeouts.push(setTimeout(() => {
+        handlePSSMove(randomPSSMove());
+        // Reset flag after PSS move
+        aiActionInProgress = false;
+        updateCursorForAI();
+      }, d));
     }
   } catch (e) {
     console.warn('maybeAutoPlayPSS error:', e);
+    aiActionInProgress = false;
+    updateCursorForAI();
   }
 }
 
@@ -3515,6 +3527,10 @@ function maybeAutoAdvanceQAForAI() {
     const isHumanLoser = (players.find(p => p.name === currentLoser)?.isHuman) || humanTeams.has(currentLoser);
     if (isHumanLoser) return;
 
+    // Set AI action flag and update cursor for question answering
+    aiActionInProgress = true;
+    updateCursorForAI();
+
     const showAnswerAndNext = () => {
       const d2 = Math.max(150, 900 / (AI_SPEED || 1));
       pssAITimeouts.push(setTimeout(() => {
@@ -3525,8 +3541,17 @@ function maybeAutoAdvanceQAForAI() {
             answerDiv.textContent = `Answer: ${currentQuestion.answer}${altSuffix}`;
             answerShown = true;
           }
-          pssAITimeouts.push(setTimeout(() => { showNextOrEnd(); }, d2));
-        } catch (e) { console.warn('AI question auto-advance failed:', e); }
+          pssAITimeouts.push(setTimeout(() => { 
+            showNextOrEnd();
+            // Reset flag after question is answered
+            aiActionInProgress = false;
+            updateCursorForAI();
+          }, d2));
+        } catch (e) { 
+          console.warn('AI question auto-advance failed:', e);
+          aiActionInProgress = false;
+          updateCursorForAI();
+        }
       }, d2));
     };
 
@@ -3542,6 +3567,8 @@ function maybeAutoAdvanceQAForAI() {
     }
   } catch (e) {
     console.warn('maybeAutoAdvanceQAForAI error:', e);
+    aiActionInProgress = false;
+    updateCursorForAI();
   }
 }
 
