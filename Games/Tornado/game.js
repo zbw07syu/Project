@@ -575,8 +575,14 @@ function checkGameEnd() {
 
     // Use Victory Manager for enhanced celebration
     if (typeof VictoryManager !== 'undefined') {
+      // Team colors for Tornado game
+      const teamColors = ['#FFD54A', '#5CD0FF', '#FF6B6B', '#A5D6A7']; // Yellow, Blue, Red, Green
+      const winnerColor = winners.length === 1 ? teamColors[winners[0]] : '#FFD700';
+      
       VictoryManager.playVictorySequence({
-        getMuteState: () => musicMuted
+        getMuteState: () => musicMuted,
+        winnerText: winnerText,
+        winnerColor: winnerColor
       });
     } else {
       // Fallback to old celebration if Victory Manager not loaded
