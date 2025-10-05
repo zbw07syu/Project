@@ -551,8 +551,24 @@
     victoryScore = sorted[0]?.score ?? 0;
     const winners = sorted.filter(t => t.score === victoryScore);
 
-    const winnerNames = winners.map(w => w.name).join(' & ');
-    feedbackEl.textContent = `Game over! Winner${winners.length > 1 ? 's' : ''}: ${winnerNames} with ${victoryScore} points.`;
+    // Team colors for Icebreak game (matching team order)
+    const teamColors = ['#5CD0FF', '#FF6B6B', '#FFD54A', '#A5D6A7']; // Blue, Red, Yellow, Green
+    
+    // Determine winner text and color
+    let winnerText, winnerColor;
+    if (winners.length === 1) {
+      // Single winner
+      const winnerIndex = teams.findIndex(t => t.name === winners[0].name);
+      winnerText = `Team ${winnerIndex + 1} is the winner!`;
+      winnerColor = (winnerIndex >= 0 && winnerIndex < teamColors.length) ? teamColors[winnerIndex] : '#FFD700';
+    } else {
+      // Tie
+      winnerText = "It's a tie!";
+      winnerColor = '#FFD700'; // Gold for ties
+    }
+
+    // Clear feedback text (no more plain text victory message)
+    feedbackEl.textContent = '';
 
     highlightWinningTeam();
     
@@ -563,11 +579,19 @@
     }
     
     // Use Victory Manager for enhanced celebration
+    console.log('🎉 Victory triggered! VictoryManager available:', typeof VictoryManager !== 'undefined');
+    console.log('🎉 Winner text:', winnerText);
+    console.log('🎉 Winner color:', winnerColor);
+    
     if (typeof VictoryManager !== 'undefined') {
+      console.log('🎉 Calling VictoryManager.playVictorySequence...');
       VictoryManager.playVictorySequence({
-        getMuteState: () => bgMusic.muted
+        getMuteState: () => bgMusic.muted,
+        winnerText: winnerText,
+        winnerColor: winnerColor
       });
     } else {
+      console.log('⚠️ VictoryManager not loaded, using fallback');
       // Fallback to old celebration if Victory Manager not loaded
       launchConfetti();
       startStrobe();

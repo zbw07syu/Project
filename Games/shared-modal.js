@@ -349,15 +349,24 @@
         incorrectBtn.style.cssText = 'background: linear-gradient(135deg, #f44336, #da190b); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
         
         correctBtn.addEventListener('click', () => {
-          if (options.onCorrect) {
-            options.onCorrect();
+          // CRITICAL FIX: Save the callback BEFORE closing modal
+          const savedCorrectCallback = options.onCorrect;
+          
+          closeModal();
+          
+          if (savedCorrectCallback) {
+            setTimeout(() => savedCorrectCallback(), 200);
           }
         });
         
         incorrectBtn.addEventListener('click', () => {
+          // CRITICAL FIX: Save the callback BEFORE closing modal
+          const savedIncorrectCallback = options.onIncorrect;
+          
           closeModal();
-          if (options.onIncorrect) {
-            setTimeout(() => options.onIncorrect(), 200);
+          
+          if (savedIncorrectCallback) {
+            setTimeout(() => savedIncorrectCallback(), 200);
           }
         });
         
@@ -373,18 +382,23 @@
         
         closeBtn.addEventListener('click', () => {
           console.log('🔔 Modal Close button clicked');
+          
+          // CRITICAL FIX: Save the callback BEFORE closing modal
+          const savedCallback = onClose;
+          
           closeModal();
-          if (onClose) {
-            console.log('🔔 Scheduling callback execution in 500ms (after modal fully closes)');
+          
+          if (savedCallback) {
+            console.log('🔔 Scheduling callback execution in 200ms (after modal fully closes)');
             setTimeout(() => {
               console.log('🔔 Executing onClose callback now, modal state:', window.modalState);
               try {
-                onClose();
+                savedCallback();
                 console.log('🔔 ✅ Callback executed successfully');
               } catch (error) {
                 console.error('❌ Error executing modal onClose callback:', error);
               }
-            }, 500); // Increased from 200ms to 500ms to ensure modal is fully closed
+            }, 200); // Reduced back to 200ms since we're now properly saving the callback
           } else {
             console.warn('⚠️ No onClose callback provided to modal');
           }
@@ -611,16 +625,18 @@
       passBtn.style.cssText = 'background: linear-gradient(135deg, #ff9800, #f57c00); color: white; font-size: 16px; margin-top: 15px; padding: 12px 20px; min-height: 45px;';
       
       continueBtn.addEventListener('click', () => {
+        const savedContinueCallback = callbacks.onContinue;
         closeModal();
-        if (callbacks.onContinue) {
-          setTimeout(() => callbacks.onContinue(), 200);
+        if (savedContinueCallback) {
+          setTimeout(() => savedContinueCallback(), 200);
         }
       });
       
       passBtn.addEventListener('click', () => {
+        const savedPassCallback = callbacks.onPass;
         closeModal();
-        if (callbacks.onPass) {
-          setTimeout(() => callbacks.onPass(), 200);
+        if (savedPassCallback) {
+          setTimeout(() => savedPassCallback(), 200);
         }
       });
       

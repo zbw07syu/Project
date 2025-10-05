@@ -1636,11 +1636,36 @@ function declareVictory(winnerName, points) {
   // Also clear dice queue so no further turns resume
   diceQueue = [];
 
+  // Determine winner color based on player type
+  const winnerColorMap = {
+    'rabbit': '#FFD700',      // Gold for single rabbit
+    'redRabbit': '#FF6B6B',   // Red
+    'blueRabbit': '#5CD0FF',  // Blue
+    'blackRabbit': '#A0A0A0', // Gray/Silver
+    'wolf': '#8B4513'         // Brown
+  };
+  
+  // Find the winner's key from the active players
+  let winnerKey = null;
+  for (const key of activeKeys) {
+    if ((namesMap[key] || key) === winnerName) {
+      winnerKey = key;
+      break;
+    }
+  }
+  
+  const winnerColor = winnerKey ? winnerColorMap[winnerKey] : '#FFD700';
+  
+  // Format victory text
+  const victoryText = `${winnerName} is the winner!`;
+
   // Use new Victory Manager
   fadeOutAudio(bgMusic, 800, 0, () => {
     if (window.VictoryManager) {
       window.VictoryManager.playVictorySequence({
-        getMuteState: () => isMuted
+        getMuteState: () => isMuted,
+        winnerText: victoryText,
+        winnerColor: winnerColor
       });
     }
   });

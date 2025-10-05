@@ -12,6 +12,7 @@
   let currentMusicTrack = null;
   let lastCombination = null;
   let isMuted = false;
+  let winnerInfo = null; // Stores winner name and color
   
   // Music tracks (relative to the HTML file loading this script)
   const MUSIC_TRACKS = [
@@ -100,11 +101,27 @@
    * @param {Object} options - Configuration options
    * @param {boolean} options.muted - Whether audio should be muted
    * @param {Function} options.getMuteState - Function to get current mute state
+   * @param {string} options.winnerText - Winner text to display (e.g., "Team 1" or "Team Blue")
+   * @param {string} options.winnerColor - Winner's team color (hex or rgb)
    */
   function playVictorySequence(options = {}) {
     try {
+      console.log('🎊 VictoryManager.playVictorySequence called with options:', options);
+      
       // Get mute state
       isMuted = options.muted || (options.getMuteState && options.getMuteState()) || false;
+
+      // Store winner info for animated text overlay
+      winnerInfo = {
+        text: options.winnerText || 'WINNER',
+        color: options.winnerColor || '#FFD700'
+      };
+      
+      console.log('🎊 Winner info stored:', winnerInfo);
+
+      // Always start the animated text overlay first
+      console.log('🎊 Starting animated text overlay...');
+      startAnimatedTextOverlay();
 
       // Select 3 unique visual effects and 1 music track
       const combination = selectRandomCombination();
@@ -138,6 +155,9 @@
    */
   function stopVictorySequence() {
     try {
+      // Stop animated text overlay
+      stopAnimatedTextOverlay();
+
       // Stop all active visual effects
       activeEffects.forEach(effect => {
         if (effect && effect.stop) {
@@ -160,6 +180,9 @@
           console.warn('Failed to stop music:', err);
         }
       }
+
+      // Clear winner info
+      winnerInfo = null;
 
     } catch (err) {
       console.error('Error in stopVictorySequence:', err);
@@ -785,6 +808,266 @@
       burstCanvas.remove();
       burstCanvas = null;
     }
+  }
+
+  // ==================== ANIMATED TEXT OVERLAY WITH PARTICLES ====================
+
+  let textOverlayContainer, textElement, textParticleCanvas, textParticleCtx;
+  let textAnimationId = null, textParticleAnimationId = null;
+  let textParticles = [];
+
+  function startAnimatedTextOverlay() {
+    console.log('🎊 startAnimatedTextOverlay called, winnerInfo:', winnerInfo);
+    
+    if (!winnerInfo) {
+      console.error('❌ No winnerInfo available!');
+      return;
+    }
+
+    // Create container for text overlay
+    textOverlayContainer = document.createElement('div');
+    textOverlayContainer.id = 'victoryTextOverlay';
+    textOverlayContainer.style.position = 'fixed';
+    textOverlayContainer.style.top = '0';
+    textOverlayContainer.style.left = '0';
+    textOverlayContainer.style.width = '100%';
+    textOverlayContainer.style.height = '100%';
+    textOverlayContainer.style.display = 'flex';
+    textOverlayContainer.style.alignItems = 'center';
+    textOverlayContainer.style.justifyContent = 'center';
+    textOverlayContainer.style.pointerEvents = 'none';
+    textOverlayContainer.style.zIndex = '10000'; // Above all other effects
+    textOverlayContainer.style.overflow = 'hidden';
+    document.body.appendChild(textOverlayContainer);
+    console.log('🎊 Text overlay container created and appended to body');
+
+    // Create the animated text element
+    textElement = document.createElement('div');
+    textElement.style.fontSize = 'clamp(3rem, 15vw, 12rem)';
+    textElement.style.fontWeight = '900';
+    textElement.style.fontFamily = 'Impact, "Arial Black", sans-serif';
+    textElement.style.textTransform = 'uppercase';
+    textElement.style.letterSpacing = '0.1em';
+    textElement.style.textAlign = 'center';
+    textElement.style.padding = '0 2rem';
+    textElement.style.maxWidth = '95%';
+    textElement.style.lineHeight = '1.2';
+    textElement.style.WebkitTextStroke = '3px rgba(0,0,0,0.5)';
+    textElement.style.textShadow = '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.5)';
+    textElement.style.filter = 'drop-shadow(0 10px 30px rgba(0,0,0,0.5))';
+    textElement.textContent = winnerInfo.text.toUpperCase();
+    textOverlayContainer.appendChild(textElement);
+
+    // Create particle canvas behind text
+    textParticleCanvas = document.createElement('canvas');
+    textParticleCanvas.id = 'victoryTextParticles';
+    textParticleCanvas.style.position = 'fixed';
+    textParticleCanvas.style.top = '0';
+    textParticleCanvas.style.left = '0';
+    textParticleCanvas.style.width = '100%';
+    textParticleCanvas.style.height = '100%';
+    textParticleCanvas.style.pointerEvents = 'none';
+    textParticleCanvas.style.zIndex = '9999'; // Just behind text
+    textParticleCanvas.width = window.innerWidth;
+    textParticleCanvas.height = window.innerHeight;
+    textParticleCtx = textParticleCanvas.getContext('2d');
+    document.body.appendChild(textParticleCanvas);
+
+    // Initialize particles
+    textParticles = [];
+
+    // Start animations
+    animateText();
+    animateTextParticles();
+  }
+
+  function animateText() {
+    let time = 0;
+    let pulsePhase = 0;
+    let shakePhase = 0;
+    let rotatePhase = 0;
+    let bouncePhase = 0;
+    let colorPhase = 0;
+
+    function animate() {
+      time += 0.016; // ~60fps
+      pulsePhase += 0.08;
+      shakePhase += 0.15;
+      rotatePhase += 0.02;
+      bouncePhase += 0.06;
+      colorPhase += 0.05;
+
+      // Rapid zoom pulse (scale between 0.9 and 1.15)
+      const pulse = 1 + Math.sin(pulsePhase) * 0.125;
+      
+      // Horizontal and vertical shake
+      const shakeX = Math.sin(shakePhase * 2.3) * 15 + Math.cos(shakePhase * 1.7) * 8;
+      const shakeY = Math.cos(shakePhase * 2.1) * 12 + Math.sin(shakePhase * 1.9) * 6;
+      
+      // Slow rotation/tilt
+      const rotate = Math.sin(rotatePhase) * 5; // ±5 degrees
+      
+      // Bounce easing (subtle vertical bounce)
+      const bounce = Math.abs(Math.sin(bouncePhase)) * 10;
+
+      // Apply all transforms
+      textElement.style.transform = `
+        translate(${shakeX}px, ${shakeY - bounce}px) 
+        scale(${pulse}) 
+        rotate(${rotate}deg)
+      `;
+
+      // Flashing color gradient
+      const hue1 = (colorPhase * 50) % 360;
+      const hue2 = (hue1 + 60) % 360;
+      const hue3 = (hue1 + 120) % 360;
+      
+      textElement.style.background = `linear-gradient(
+        90deg, 
+        hsl(${hue1}, 100%, 60%), 
+        hsl(${hue2}, 100%, 70%), 
+        hsl(${hue3}, 100%, 60%)
+      )`;
+      textElement.style.backgroundClip = 'text';
+      textElement.style.WebkitBackgroundClip = 'text';
+      textElement.style.WebkitTextFillColor = 'transparent';
+
+      // Emit particles on pulse peaks
+      if (Math.sin(pulsePhase) > 0.9 || Math.abs(Math.sin(bouncePhase)) < 0.1) {
+        emitTextParticles();
+      }
+
+      // Flash effect on strong pulses
+      if (Math.sin(pulsePhase) > 0.95) {
+        createFlash();
+      }
+
+      textAnimationId = requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
+  function emitTextParticles() {
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const burstCount = 15;
+
+    // Parse winner color or use default
+    let particleColor = winnerInfo.color;
+    
+    for (let i = 0; i < burstCount; i++) {
+      const angle = (Math.PI * 2 * i) / burstCount + Math.random() * 0.5;
+      const speed = 2 + Math.random() * 4;
+      const size = 3 + Math.random() * 5;
+      
+      textParticles.push({
+        x: centerX + (Math.random() - 0.5) * 200,
+        y: centerY + (Math.random() - 0.5) * 100,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: size,
+        life: 1,
+        decay: 0.015 + Math.random() * 0.01,
+        color: particleColor,
+        glow: true
+      });
+    }
+  }
+
+  function createFlash() {
+    const flash = document.createElement('div');
+    flash.style.position = 'fixed';
+    flash.style.top = '0';
+    flash.style.left = '0';
+    flash.style.width = '100%';
+    flash.style.height = '100%';
+    flash.style.background = 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%)';
+    flash.style.pointerEvents = 'none';
+    flash.style.zIndex = '9997';
+    flash.style.animation = 'victoryFlash 0.3s ease-out';
+    document.body.appendChild(flash);
+
+    // Add CSS animation if not already present
+    if (!document.getElementById('victoryFlashStyle')) {
+      const style = document.createElement('style');
+      style.id = 'victoryFlashStyle';
+      style.textContent = `
+        @keyframes victoryFlash {
+          0% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    setTimeout(() => flash.remove(), 300);
+  }
+
+  function animateTextParticles() {
+    function animate() {
+      if (!textParticleCtx) return;
+
+      // Fade trail effect
+      textParticleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      textParticleCtx.fillRect(0, 0, textParticleCanvas.width, textParticleCanvas.height);
+
+      // Update and draw particles
+      textParticles = textParticles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1; // gravity
+        p.life -= p.decay;
+
+        if (p.life > 0) {
+          textParticleCtx.save();
+          textParticleCtx.globalAlpha = p.life;
+          
+          if (p.glow) {
+            textParticleCtx.shadowBlur = 15;
+            textParticleCtx.shadowColor = p.color;
+          }
+          
+          textParticleCtx.fillStyle = p.color;
+          textParticleCtx.beginPath();
+          textParticleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          textParticleCtx.fill();
+          textParticleCtx.restore();
+          
+          return true;
+        }
+        return false;
+      });
+
+      textParticleAnimationId = requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
+  function stopAnimatedTextOverlay() {
+    // Stop animations
+    if (textAnimationId) {
+      cancelAnimationFrame(textAnimationId);
+      textAnimationId = null;
+    }
+    if (textParticleAnimationId) {
+      cancelAnimationFrame(textParticleAnimationId);
+      textParticleAnimationId = null;
+    }
+
+    // Remove DOM elements
+    if (textOverlayContainer) {
+      textOverlayContainer.remove();
+      textOverlayContainer = null;
+      textElement = null;
+    }
+    if (textParticleCanvas) {
+      textParticleCanvas.remove();
+      textParticleCanvas = null;
+      textParticleCtx = null;
+    }
+
+    // Clear particles
+    textParticles = [];
   }
 
   // ==================== HELPER FUNCTIONS ====================
