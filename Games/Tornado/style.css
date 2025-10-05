@@ -49,6 +49,7 @@ body.font-loaded {
     display: block;
     opacity: 0;
     visibility: hidden;
+    background: transparent;
 }
 
 .hidden {

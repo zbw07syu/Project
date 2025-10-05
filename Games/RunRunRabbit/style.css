@@ -144,6 +144,7 @@ body {
   z-index: 2000;
   opacity: 0;
   transition: opacity 0.4s ease;
+  background: transparent;
 }
 
 #confettiCanvas.show {

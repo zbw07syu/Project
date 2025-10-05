@@ -88,6 +88,7 @@ h1 { text-align: center; margin: 12px 0; text-shadow: 2px 2px #000; }
   z-index: 2000;
   opacity: 0;
   transition: opacity 0.4s ease;
+  background: transparent;
 }
 
 #confettiCanvas.show {
