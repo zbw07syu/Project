@@ -1,0 +1,63 @@
+{
+  "questions": [
+    {
+      "type": "multi",
+      "text": "What animal is shown in this image?",
+      "options": ["Cat", "Dog", "Rabbit", "Bird"],
+      "correct": [0],
+      "image": "question-images/sample-cat.gif",
+      "comment": "Example with animated GIF"
+    },
+    {
+      "type": "single",
+      "text": "What color is the object in the image?",
+      "answer": "Blue",
+      "image": "question-images/blue-object.jpg",
+      "comment": "Example with static JPG image"
+    },
+    {
+      "type": "icebreak",
+      "text": "Describe what you see in this scene",
+      "image": "question-images/landscape.png",
+      "comment": "Example for Icebreak game with PNG image"
+    },
+    {
+      "type": "multi",
+      "text": "What is 2 + 2?",
+      "options": ["3", "4", "5", "6"],
+      "correct": [1],
+      "comment": "Example WITHOUT image - backward compatible"
+    },
+    {
+      "type": "single",
+      "text": "What is the capital of France?",
+      "answer": "Paris",
+      "comment": "Example WITHOUT image - backward compatible"
+    }
+  ],
+  "metadata": {
+    "version": "2.0",
+    "features": [
+      "Optional image support",
+      "GIF animation support",
+      "Backward compatible",
+      "Error handling for missing images"
+    ],
+    "imageFormats": [
+      "GIF (animated)",
+      "JPG/JPEG",
+      "PNG",
+      "WebP",
+      "SVG",
+      "APNG (animated)"
+    ],
+    "imagePath": "question-images/",
+    "notes": [
+      "The 'image' field is optional",
+      "If omitted or null, questions display without images",
+      "Images are displayed above the question text",
+      "Broken image links are handled gracefully",
+      "Images scale responsively on mobile devices"
+    ]
+  }
+}

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Image Feature Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-image {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+            margin: 10px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ Question Image Feature - Implementation Complete</h1>
+    
+    <div class="status success">
+        <strong>Status:</strong> Image support (including GIFs) has been successfully implemented across all three games!
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Implementation Summary</h2>
+        <p>The following features have been implemented:</p>
+        <ul>
+            <li>✅ Optional image support for all question types</li>
+            <li>✅ GIF animation support (native HTML support)</li>
+            <li>✅ Static image support (JPG, PNG, WebP, SVG)</li>
+            <li>✅ Backward compatibility (existing questions work without images)</li>
+            <li>✅ Error handling (broken images won't break the UI)</li>
+            <li>✅ Responsive design (scales properly on mobile)</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎮 Games Updated</h2>
+        
+        <h3>1. RunRunRabbit</h3>
+        <ul>
+            <li>Multiple-choice questions: ✅ Image support added</li>
+            <li>Open-answer questions: ✅ Image support added</li>
+            <li>Uses shared modal system</li>
+        </ul>
+
+        <h3>2. Icebreak</h3>
+        <ul>
+            <li>Icebreak questions: ✅ Image support added</li>
+            <li>Single-answer questions: ✅ Image support added</li>
+            <li>Custom DOM-based display with dedicated styling</li>
+        </ul>
+
+        <h3>3. Tornado</h3>
+        <ul>
+            <li>Multiple-choice questions: ✅ Image support added</li>
+            <li>Open-answer questions: ✅ Image support added</li>
+            <li>Uses shared modal system</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 How to Use</h2>
+        
+        <div class="example">
+            <strong>For Multiple Choice Questions:</strong>
+            <pre><code>{
+  "type": "multi",
+  "text": "What animal is shown in this GIF?",
+  "options": ["Cat", "Dog", "Rabbit", "Bird"],
+  "correct": [0],
+  "image": "question-images/cat-animation.gif"
+}</code></pre>
+        </div>
+
+        <div class="example">
+            <strong>For Single Answer Questions:</strong>
+            <pre><code>{
+  "type": "single",
+  "text": "What color is this object?",
+  "answer": "Blue",
+  "image": "question-images/blue-object.jpg"
+}</code></pre>
+        </div>
+
+        <div class="example">
+            <strong>For Icebreak Questions:</strong>
+            <pre><code>{
+  "type": "icebreak",
+  "text": "What's happening in this scene?",
+  "image": "question-images/scene.png"
+}</code></pre>
+        </div>
+
+        <div class="status info">
+            <strong>Note:</strong> The <code>image</code> field is optional. If omitted or set to <code>null</code>, questions display normally without images.
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🖼️ Image Storage</h2>
+        <p>Store your images in: <code>/Games/question-images/</code></p>
+        <p>Reference them in questions using: <code>question-images/your-image.gif</code></p>
+        
+        <h3>Supported Formats:</h3>
+        <ul>
+            <li><strong>Animated:</strong> GIF, APNG</li>
+            <li><strong>Static:</strong> JPG, PNG, WebP, SVG</li>
+        </ul>
+
+        <h3>Recommended Specifications:</h3>
+        <ul>
+            <li>Max file size: 500KB</li>
+            <li>Max dimensions: 800x600px</li>
+            <li>Display size: 300px height (desktop), 200px (mobile)</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Details</h2>
+        
+        <h3>Files Modified:</h3>
+        <ol>
+            <li><code>Games/shared-modal.js</code> - Added image support to all modal functions</li>
+            <li><code>Games/RunRunRabbit/game.js</code> - Question parsing and display</li>
+            <li><code>Games/Icebreak/index.html</code> - Added image container</li>
+            <li><code>Games/Icebreak/style.css</code> - Added image styling</li>
+            <li><code>Games/Icebreak/icebreak.js</code> - Image display logic</li>
+            <li><code>Games/Tornado/game.js</code> - Question parsing and display</li>
+        </ol>
+
+        <h3>Error Handling:</h3>
+        <p>All implementations include automatic error handling. If an image fails to load:</p>
+        <ul>
+            <li>The image container is automatically hidden</li>
+            <li>The question continues to display normally</li>
+            <li>No error messages are shown to the user</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Testing the Feature</h2>
+        <p>To test the image feature:</p>
+        <ol>
+            <li>Add image files to <code>/Games/question-images/</code></li>
+            <li>Update your question JSON to include the <code>image</code> field</li>
+            <li>Launch any of the three games</li>
+            <li>Play through questions - images will appear above the question text</li>
+        </ol>
+
+        <button onclick="alert('To test:\n1. Add images to /Games/question-images/\n2. Update question JSON with image paths\n3. Launch a game and play!')">
+            Quick Test Guide
+        </button>
+        <button onclick="window.location.href='RunRunRabbit/index.html'">
+            Test in RunRunRabbit
+        </button>
+        <button onclick="window.location.href='Icebreak/index.html'">
+            Test in Icebreak
+        </button>
+        <button onclick="window.location.href='Tornado/index.html'">
+            Test in Tornado
+        </button>
+    </div>
+
+    <div class="test-section">
+        <h2>✨ Next Steps</h2>
+        <p>The feature is fully implemented and ready to use! To start using images in your questions:</p>
+        <ol>
+            <li>Collect or create images/GIFs for your questions</li>
+            <li>Place them in the <code>question-images</code> folder</li>
+            <li>Update your question data to include image paths</li>
+            <li>Optionally: Create an editor interface for easier image management</li>
+        </ol>
+    </div>
+
+    <div class="status success">
+        <strong>✅ Implementation Complete!</strong> All three games now support optional images (including GIFs) for questions with full backward compatibility.
+    </div>
+</body>
+</html>

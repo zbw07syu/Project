@@ -1,0 +1,23 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#4CAF50"/>
+  
+  <!-- Border -->
+  <rect x="10" y="10" width="380" height="280" fill="none" stroke="white" stroke-width="4" stroke-dasharray="10,5"/>
+  
+  <!-- Icon - Image symbol -->
+  <rect x="150" y="80" width="100" height="80" fill="white" opacity="0.9" rx="5"/>
+  <circle cx="175" cy="105" r="8" fill="#4CAF50"/>
+  <polyline points="155,145 175,125 195,140 235,110" fill="none" stroke="#4CAF50" stroke-width="3"/>
+  
+  <!-- Text -->
+  <text x="200" y="200" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" font-weight="bold">
+    Question Image
+  </text>
+  <text x="200" y="230" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">
+    Replace with your own image
+  </text>
+  <text x="200" y="255" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" opacity="0.8">
+    (GIF, JPG, PNG, WebP, SVG)
+  </text>
+</svg>

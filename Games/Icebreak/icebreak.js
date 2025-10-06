@@ -3,6 +3,7 @@
   // DOM references
   const gridEl = document.getElementById('grid');
   const revealedEl = document.getElementById('revealed');
+  const questionImageEl = document.getElementById('questionImage');
   const inputArea = document.getElementById('inputArea');
   const guessInput = document.getElementById('guessInput');
   const submitGuess = document.getElementById('submitGuess');
@@ -143,14 +144,16 @@
                   return {
                     type: 'icebreak',
                     prompt: q.prompt || '',
-                    accepted: Array.isArray(q.accepted) ? q.accepted.filter(a => a && a.trim() !== '') : []
+                    accepted: Array.isArray(q.accepted) ? q.accepted.filter(a => a && a.trim() !== '') : [],
+                    image: q.image || null
                   };
                 }
                 return {
                   type: 'single',
                   text: q.text || '',
                   answer: q.answer || '',
-                  alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : []
+                  alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [],
+                  image: q.image || null
                 };
               })
           };
@@ -237,6 +240,18 @@
 
     selectedSquareIdx = idx;
     revealedEl.textContent = sq.prompt;
+    
+    // Handle image display
+    if (questionImageEl) {
+      if (sq.image) {
+        questionImageEl.innerHTML = `<img src="${sq.image}" alt="Question image" onerror="this.parentElement.classList.remove('show')">`;
+        questionImageEl.classList.add('show');
+      } else {
+        questionImageEl.innerHTML = '';
+        questionImageEl.classList.remove('show');
+      }
+    }
+    
     feedbackEl.textContent = '';
     guessInput.value = '';
     guessInput.disabled = false;
@@ -475,6 +490,18 @@
     selectedSquareIdx = remainingIdx;
     const sq = squares[remainingIdx];
     revealedEl.textContent = sq.prompt;
+    
+    // Handle image display for AI
+    if (questionImageEl) {
+      if (sq.image) {
+        questionImageEl.innerHTML = `<img src="${sq.image}" alt="Question image" onerror="this.parentElement.classList.remove('show')">`;
+        questionImageEl.classList.add('show');
+      } else {
+        questionImageEl.innerHTML = '';
+        questionImageEl.classList.remove('show');
+      }
+    }
+    
     feedbackEl.textContent = '';
     guessInput.value = '';
 

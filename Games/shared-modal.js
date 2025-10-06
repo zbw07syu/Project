@@ -41,6 +41,8 @@
           <button class="mc-modal-close" aria-label="Close modal">&times;</button>
         </div>
         <div class="mc-modal-body">
+          <div class="mc-modal-turn-indicator"></div>
+          <div class="mc-modal-image"></div>
           <div class="mc-modal-question"></div>
           <div class="mc-modal-options"></div>
           <div class="mc-modal-answer"></div>
@@ -133,6 +135,53 @@
         overflow-y: auto;
       }
 
+      .mc-modal-turn-indicator {
+        display: none;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .mc-modal-turn-indicator.show {
+        display: block;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        50% {
+          transform: scale(1.02);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        }
+      }
+
+      .mc-modal-image {
+        display: none;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .mc-modal-image.show {
+        display: block;
+      }
+
+      .mc-modal-image img {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        object-fit: contain;
+      }
+
       .mc-modal-question {
         font-size: 18px;
         font-weight: bold;
@@ -210,6 +259,10 @@
 
         .mc-modal-title {
           font-size: 20px;
+        }
+
+        .mc-modal-image img {
+          max-height: 200px;
         }
 
         .mc-modal-question {
@@ -434,8 +487,10 @@
    * @param {string} question - The question text
    * @param {string[]} options - Array of option strings
    * @param {function} callback - Function to call when option is selected
+   * @param {string} imagePath - Optional path to an image to display above the question
+   * @param {string} turnIndicator - Optional text to show whose turn it is (e.g., "blackrabbit must answer")
    */
-  function showOptionsModal(question, options, callback) {
+  function showOptionsModal(question, options, callback, imagePath = null, turnIndicator = null) {
     if (!modalContainer) {
       createMultipleChoiceModal();
     }
@@ -445,7 +500,7 @@
     // If modal is currently closing, wait for it to finish before opening again
     if (window.modalState === 'closing') {
       console.log('🔔 Modal is closing, waiting 400ms before opening new question');
-      setTimeout(() => showOptionsModal(question, options, callback), 400);
+      setTimeout(() => showOptionsModal(question, options, callback, imagePath, turnIndicator), 400);
       return;
     }
 
@@ -455,6 +510,26 @@
     }
 
     currentCallback = callback;
+
+    // Handle turn indicator display
+    const turnIndicatorEl = modalContainer.querySelector('.mc-modal-turn-indicator');
+    if (turnIndicator) {
+      turnIndicatorEl.textContent = turnIndicator;
+      turnIndicatorEl.classList.add('show');
+    } else {
+      turnIndicatorEl.textContent = '';
+      turnIndicatorEl.classList.remove('show');
+    }
+
+    // Handle image display
+    const imageEl = modalContainer.querySelector('.mc-modal-image');
+    if (imagePath) {
+      imageEl.innerHTML = `<img src="${imagePath}" alt="Question image" onerror="this.parentElement.classList.remove('show');">`;
+      imageEl.classList.add('show');
+    } else {
+      imageEl.innerHTML = '';
+      imageEl.classList.remove('show');
+    }
 
     // Set question text
     const questionEl = modalContainer.querySelector('.mc-modal-question');
@@ -523,8 +598,10 @@
    * @param {object} callbacks - Callback functions
    * @param {function} callbacks.onCorrect - Called when Correct is clicked
    * @param {function} callbacks.onIncorrect - Called when Incorrect is clicked
+   * @param {string} imagePath - Optional path to an image to display above the question
+   * @param {string} turnIndicator - Optional text to show whose turn it is (e.g., "blackrabbit must answer")
    */
-  function showOpenAnswerModal(question, answer, alternates, callbacks = {}) {
+  function showOpenAnswerModal(question, answer, alternates, callbacks = {}, imagePath = null, turnIndicator = null) {
     if (!modalContainer) {
       createMultipleChoiceModal();
     }
@@ -532,6 +609,26 @@
     // Update modal state tracking
     if (window.modalState !== undefined) {
       window.modalState = 'opening';
+    }
+
+    // Handle turn indicator display
+    const turnIndicatorEl = modalContainer.querySelector('.mc-modal-turn-indicator');
+    if (turnIndicator) {
+      turnIndicatorEl.textContent = turnIndicator;
+      turnIndicatorEl.classList.add('show');
+    } else {
+      turnIndicatorEl.textContent = '';
+      turnIndicatorEl.classList.remove('show');
+    }
+
+    // Handle image display
+    const imageEl = modalContainer.querySelector('.mc-modal-image');
+    if (imagePath) {
+      imageEl.innerHTML = `<img src="${imagePath}" alt="Question image" onerror="this.parentElement.classList.remove('show');">`;
+      imageEl.classList.add('show');
+    } else {
+      imageEl.innerHTML = '';
+      imageEl.classList.remove('show');
     }
 
     // Set question text
@@ -592,8 +689,10 @@
    * @param {object} callbacks - Callback functions
    * @param {function} callbacks.onContinue - Called when Continue is clicked
    * @param {function} callbacks.onPass - Called when Pass is clicked
+   * @param {string|null} imagePath - Optional path to image to display with the question
+   * @param {string} turnIndicator - Optional text to show whose turn it is (e.g., "blackrabbit must answer")
    */
-  function showContinuePassModal(message, callbacks = {}) {
+  function showContinuePassModal(message, callbacks = {}, imagePath = null, turnIndicator = null) {
     if (!modalContainer) return;
     
     console.log('🔔 showContinuePassModal called with:', { message, hasContinue: !!callbacks.onContinue, hasPass: !!callbacks.onPass });
@@ -606,6 +705,30 @@
     
     const answerEl = modalContainer.querySelector('.mc-modal-answer');
     const optionsEl = modalContainer.querySelector('.mc-modal-options');
+    const imageEl = modalContainer.querySelector('.mc-modal-image');
+    const turnIndicatorEl = modalContainer.querySelector('.mc-modal-turn-indicator');
+    
+    // Handle turn indicator display
+    if (turnIndicatorEl) {
+      if (turnIndicator) {
+        turnIndicatorEl.textContent = turnIndicator;
+        turnIndicatorEl.classList.add('show');
+      } else {
+        turnIndicatorEl.textContent = '';
+        turnIndicatorEl.classList.remove('show');
+      }
+    }
+    
+    // Handle image display
+    if (imageEl) {
+      if (imagePath) {
+        imageEl.innerHTML = `<img src="${imagePath}" alt="Question image" onerror="this.parentElement.classList.remove('show')">`;
+        imageEl.classList.add('show');
+      } else {
+        imageEl.innerHTML = '';
+        imageEl.classList.remove('show');
+      }
+    }
     
     if (answerEl && optionsEl) {
       // Clear the options section
@@ -684,12 +807,13 @@
    * @param {string[]} options - Array of option strings
    * @param {function} callback - Function to call when option is selected
    * @param {string} buttonClass - CSS class for inline option buttons
+   * @param {string} imagePath - Optional path to an image to display (only used in modal)
    */
-  function displayOptions(container, question, options, callback, buttonClass = 'option-btn') {
+  function displayOptions(container, question, options, callback, buttonClass = 'option-btn', imagePath = null) {
     if (!Array.isArray(options) || options.length === 0) return;
 
     if (shouldUseModal(options)) {
-      showOptionsModal(question, options, callback);
+      showOptionsModal(question, options, callback, imagePath);
     } else {
       showOptionsInline(container, options, callback, buttonClass);
     }

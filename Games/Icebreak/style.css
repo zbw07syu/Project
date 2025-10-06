@@ -79,6 +79,24 @@ h1 { text-align: center; margin: 12px 0; text-shadow: 2px 2px #000; }
 #questionArea { background: rgba(0,0,0,0.35); border-radius: 10px; padding: 10px; display: grid; grid-template-columns: 1fr; gap: 8px; }
 .panelBox { background: var(--panel); color: var(--text); padding: 8px; border-radius: 8px; min-height: 40px; font-size: 26px; }
 
+.questionImage {
+  display: none;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.questionImage.show {
+  display: block;
+}
+
+.questionImage img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  object-fit: contain;
+}
+
 #confettiCanvas {
   position: fixed;
   inset: 0;

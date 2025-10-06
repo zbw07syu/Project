@@ -671,11 +671,12 @@ try {
           return {
             text: q.text || '',
             answer: Array.isArray(q.correct) && q.options ? q.options.filter((_, i) => q.correct.includes(i)).join(', ') : (q.answer || ''),
-            options: Array.isArray(q.options) ? q.options.slice(0, 4) : []
+            options: Array.isArray(q.options) ? q.options.slice(0, 4) : [],
+            image: q.image || null
           };
         }
         // single
-        return { text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [] };
+        return { text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [], image: q.image || null };
       }).filter(q => q && q.text);
     }
   }
@@ -2461,7 +2462,7 @@ function handlePSSMove(moveForCurrent) {
     // Don't select question here - let askNextLoserQuestion() handle it
 
     const loserNames = losers.map(p => namesMap[p] || p).join(", ");
-    answerDiv.textContent = `${loserNames} must answer!`;
+    answerDiv.textContent = ""; // Clear answerDiv - turn indicator will show in modal
 
     // Show a single "Show Question" button in controls area
     controlsDiv.innerHTML = "";
@@ -2509,9 +2510,9 @@ function askNextLoserQuestion() {
   currentQuestion = questions[questionIndex];
   questionIndex = (questionIndex + 1) % questions.length;
 
-  // Show question text and current loser
+  // Show question text (turn indicator now shown in modal)
   questionDiv.textContent = currentQuestion.text;
-  answerDiv.textContent = `${namesMap[currentLoser] || currentLoser} must answer!`;
+  answerDiv.textContent = ""; // Clear answerDiv - turn indicator now in modal
   controlsDiv.innerHTML = "";
   answerShown = false;
 
@@ -2649,11 +2650,17 @@ function showNextStep() {
         modalSelectionMade = false;
         console.log('🔔 Setting waitingForModalSelection = true before displaying modal');
         
+        // Get turn indicator text
+        const currentLoser = losers[currentLoserIndex];
+        const turnIndicatorText = `${namesMap[currentLoser] || currentLoser} must answer!`;
+        
         // Always use modal for consistency
         window.MultipleChoiceModal.showModal(
           currentQuestion.text,
           currentQuestion.options,
-          handleOptionSelect
+          handleOptionSelect,
+          currentQuestion.image,
+          turnIndicatorText
         );
       } else {
         // Fallback to original behavior if modal system not available
@@ -2744,10 +2751,30 @@ function showNextStep() {
             return;
           }
           
+          // Handle turn indicator display
+          const turnIndicatorEl = modalContainer.querySelector('.mc-modal-turn-indicator');
+          if (turnIndicatorEl) {
+            const turnIndicatorText = `${namesMap[currentLoser] || currentLoser} must answer!`;
+            turnIndicatorEl.textContent = turnIndicatorText;
+            turnIndicatorEl.classList.add('show');
+          }
+          
           // Set question text
           const questionEl = modalContainer.querySelector('.mc-modal-question');
           if (questionEl) {
             questionEl.textContent = currentQuestion.text || '';
+          }
+          
+          // Handle image display
+          const imageEl = modalContainer.querySelector('.mc-modal-image');
+          if (imageEl) {
+            if (currentQuestion.image) {
+              imageEl.innerHTML = `<img src="${currentQuestion.image}" alt="Question image" onerror="this.parentElement.classList.remove('show')">`;
+              imageEl.classList.add('show');
+            } else {
+              imageEl.innerHTML = '';
+              imageEl.classList.remove('show');
+            }
           }
           
           // Hide answer section initially
