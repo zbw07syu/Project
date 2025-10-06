@@ -234,7 +234,7 @@
   function playVictoryMusic(musicPath) {
     try {
       currentMusicTrack = new Audio(musicPath);
-      currentMusicTrack.volume = 0.3;
+      currentMusicTrack.volume = 0.4;
       currentMusicTrack.muted = isMuted;
       
       currentMusicTrack.play().catch(err => {
@@ -427,8 +427,7 @@
     const fireworkInterval = setInterval(createFirework, 800);
 
     function animate() {
-      fireworksCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      fireworksCtx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+      fireworksCtx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
 
       fireworksParticles = fireworksParticles.filter(p => {
         p.x += p.vx;
@@ -661,8 +660,7 @@
     }
 
     function animate() {
-      swirlCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      swirlCtx.fillRect(0, 0, swirlCanvas.width, swirlCanvas.height);
+      swirlCtx.clearRect(0, 0, swirlCanvas.width, swirlCanvas.height);
 
       swirlParticles.forEach(p => {
         p.angle += p.speed;
@@ -1007,9 +1005,8 @@
     function animate() {
       if (!textParticleCtx) return;
 
-      // Fade trail effect
-      textParticleCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      textParticleCtx.fillRect(0, 0, textParticleCanvas.width, textParticleCanvas.height);
+      // Clear canvas to keep background visible
+      textParticleCtx.clearRect(0, 0, textParticleCanvas.width, textParticleCanvas.height);
 
       // Update and draw particles
       textParticles = textParticles.filter(p => {
