@@ -36,7 +36,7 @@ app.get('/health', (req, res) => {
 // Generate questions endpoint
 app.post('/generate', async (req, res) => {
   try {
-    const { theme, type, numQuestions } = req.body;
+    const { theme, type, numQuestions, singleCount, multiCount } = req.body;
 
     // Validate input
     if (!theme || !type || !numQuestions) {
@@ -68,9 +68,23 @@ Return ONLY a valid JSON array of question objects. Each question should have:
 - answer: the correct answer (for single-answer questions)
 - options: array of 2-4 options (for multiple-choice questions, with the first option being correct)
 
-Mix single-answer and multiple-choice questions. Make questions educational, age-appropriate, and engaging.`;
+Make questions educational, age-appropriate, and engaging.`;
 
-      userPrompt = `Generate ${numQuestions} questions about "${theme}". Return only the JSON array, no other text.
+      // Build the prompt based on the question type breakdown
+      let questionTypeInstruction = '';
+      if (singleCount !== undefined && multiCount !== undefined) {
+        if (singleCount > 0 && multiCount > 0) {
+          questionTypeInstruction = `Generate exactly ${singleCount} single-answer questions followed by ${multiCount} multiple-choice questions.`;
+        } else if (singleCount > 0 && multiCount === 0) {
+          questionTypeInstruction = `Generate ONLY single-answer questions (type: "single"). Do NOT generate any multiple-choice questions.`;
+        } else if (singleCount === 0 && multiCount > 0) {
+          questionTypeInstruction = `Generate ONLY multiple-choice questions (type: "multiple"). Do NOT generate any single-answer questions.`;
+        }
+      } else {
+        questionTypeInstruction = `Mix single-answer and multiple-choice questions.`;
+      }
+
+      userPrompt = `Generate ${numQuestions} questions about "${theme}". ${questionTypeInstruction} Return only the JSON array, no other text.
 
 Example format:
 [

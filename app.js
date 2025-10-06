@@ -67,7 +67,9 @@
     const accepted = acceptedSource
       .map((value) => (typeof value === 'string' ? value.trim() : ''))
       .filter(Boolean);
-    return { id, type: 'icebreak', prompt: prompt || '', accepted };
+    const result = { id, type: 'icebreak', prompt: prompt || '', accepted };
+    if (raw.image) result.image = raw.image;
+    return result;
   };
 
   const normalizeRegularQuestion = (raw) => {
@@ -76,23 +78,27 @@
     if (raw.type === 'multi') {
       const options = Array.isArray(raw.options) && raw.options.length ? raw.options.slice(0, 4) : ['', ''];
       const correct = Array.isArray(raw.correct) ? raw.correct.filter((idx) => Number.isInteger(idx)) : [];
-      return {
+      const result = {
         id,
         type: 'multi',
         text: raw.text || '',
         options: options.map((opt) => (typeof opt === 'string' ? opt : '')),
         correct: [...new Set(correct)].sort((a, b) => a - b),
       };
+      if (raw.image) result.image = raw.image;
+      return result;
     }
 
     const alternates = Array.isArray(raw.alternates) ? raw.alternates.filter((a) => typeof a === 'string') : [];
-    return {
+    const result = {
       id,
       type: 'single',
       text: raw.text || raw.prompt || '',
       answer: typeof raw.answer === 'string' ? raw.answer : (raw.accepted && typeof raw.accepted[0] === 'string' ? raw.accepted[0] : ''),
       alternates,
     };
+    if (raw.image) result.image = raw.image;
+    return result;
   };
 
   const normalizeList = (list) => {
@@ -114,29 +120,35 @@
               const accepted = acceptedSource
                 .map((a) => (typeof a === 'string' ? a.trim() : ''))
                 .filter(Boolean);
-              return { id, type: 'icebreak', prompt: prompt || '', accepted };
+              const result = { id, type: 'icebreak', prompt: prompt || '', accepted };
+              if (q.image) result.image = q.image;
+              return result;
             }
 
             if (q.type === 'multi') {
               const options = Array.isArray(q.options) && q.options.length ? q.options.slice(0, 4) : ['', ''];
               const correct = Array.isArray(q.correct) ? q.correct.filter((idx) => Number.isInteger(idx)) : [];
-              return {
+              const result = {
                 id,
                 type: 'multi',
                 text: q.text || '',
                 options: options.map((opt) => (typeof opt === 'string' ? opt : '')),
                 correct: [...new Set(correct)].sort((a, b) => a - b),
               };
+              if (q.image) result.image = q.image;
+              return result;
             }
 
             const alternates = Array.isArray(q.alternates) ? q.alternates.filter((a) => typeof a === 'string') : [];
-            return {
+            const result = {
               id,
               type: 'single',
               text: q.text || '',
               answer: typeof q.answer === 'string' ? q.answer : '',
               alternates,
             };
+            if (q.image) result.image = q.image;
+            return result;
           })
           .filter(Boolean)
       : [];
@@ -367,6 +379,18 @@
             </label>
           </div>
           <div class="row">
+            <label>Image (optional)
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" data-kind="image" data-qid="${q.id}" placeholder="e.g., question-images/my-image.gif" style="flex:1;" />
+                <input type="file" data-kind="image-upload" data-qid="${q.id}" accept="image/*" style="display:none;" />
+                <button class="ghost" data-action="upload-image" data-qid="${q.id}" title="Upload image file">📁 Upload</button>
+              </div>
+              <div class="image-preview" data-qid="${q.id}" style="margin-top:8px; display:none;">
+                <img src="" alt="Preview" style="max-width:200px; max-height:150px; border-radius:4px; border:1px solid #ddd;" />
+              </div>
+            </label>
+          </div>
+          <div class="row">
             <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
               <label>Accepted questions</label>
               <button class="ghost" data-action="add-accepted" data-qid="${q.id}">+ Add accepted question</button>
@@ -382,6 +406,18 @@
           <div class="row">
             <label>Question text
               <textarea data-kind="text" data-qid="${q.id}" rows="2" placeholder="Type the question..."></textarea>
+            </label>
+          </div>
+          <div class="row">
+            <label>Image (optional)
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" data-kind="image" data-qid="${q.id}" placeholder="e.g., question-images/my-image.gif" style="flex:1;" />
+                <input type="file" data-kind="image-upload" data-qid="${q.id}" accept="image/*" style="display:none;" />
+                <button class="ghost" data-action="upload-image" data-qid="${q.id}" title="Upload image file">📁 Upload</button>
+              </div>
+              <div class="image-preview" data-qid="${q.id}" style="margin-top:8px; display:none;">
+                <img src="" alt="Preview" style="max-width:200px; max-height:150px; border-radius:4px; border:1px solid #ddd;" />
+              </div>
             </label>
           </div>
           <div class="row cols-2">
@@ -417,6 +453,18 @@
           <div class="row">
             <label>Question text
               <textarea data-kind="text" data-qid="${q.id}" rows="2" placeholder="Type the question..."></textarea>
+            </label>
+          </div>
+          <div class="row">
+            <label>Image (optional)
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" data-kind="image" data-qid="${q.id}" placeholder="e.g., question-images/my-image.gif" style="flex:1;" />
+                <input type="file" data-kind="image-upload" data-qid="${q.id}" accept="image/*" style="display:none;" />
+                <button class="ghost" data-action="upload-image" data-qid="${q.id}" title="Upload image file">📁 Upload</button>
+              </div>
+              <div class="image-preview" data-qid="${q.id}" style="margin-top:8px; display:none;">
+                <img src="" alt="Preview" style="max-width:200px; max-height:150px; border-radius:4px; border:1px solid #ddd;" />
+              </div>
             </label>
           </div>
           <div class="row">
@@ -517,6 +565,20 @@
           qRef.accepted = Array.isArray(qRef.accepted) ? qRef.accepted : [];
           qRef.accepted[idx] = t.value;
         }
+        if (kind === 'image') {
+          qRef.image = t.value.trim();
+          // Update preview
+          const previewContainer = card.querySelector(`.image-preview[data-qid="${qid}"]`);
+          if (previewContainer) {
+            const img = previewContainer.querySelector('img');
+            if (qRef.image) {
+              img.src = qRef.image;
+              previewContainer.style.display = 'block';
+            } else {
+              previewContainer.style.display = 'none';
+            }
+          }
+        }
       });
 
       card.addEventListener('click', (e) => {
@@ -589,7 +651,90 @@
           }
           renderQuestionsEditor();
         }
+
+        if (action === 'upload-image') {
+          const fileInput = card.querySelector(`[data-kind="image-upload"][data-qid="${qid}"]`);
+          if (fileInput) fileInput.click();
+        }
       });
+
+      // Handle file upload
+      const fileInput = card.querySelector('[data-kind="image-upload"]');
+      if (fileInput) {
+        fileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          // Validate file type
+          if (!file.type.startsWith('image/')) {
+            toast('Please select an image file.');
+            return;
+          }
+
+          // Validate file size (max 500KB recommended)
+          if (file.size > 500 * 1024) {
+            const proceed = confirm('File is larger than 500KB. This may affect loading performance. Continue?');
+            if (!proceed) {
+              e.target.value = '';
+              return;
+            }
+          }
+
+          const qid = fileInput.getAttribute('data-qid');
+          const qRef = state.draft.questions.find((x) => x.id === qid);
+          if (!qRef) return;
+
+          try {
+            // Create the path for the image
+            const imagePath = `question-images/${file.name}`;
+            
+            // Update the question with the image path
+            qRef.image = imagePath;
+            
+            // Update the text input field
+            const imageInput = card.querySelector(`[data-kind="image"][data-qid="${qid}"]`);
+            if (imageInput) imageInput.value = imagePath;
+            
+            // Show preview
+            const previewContainer = card.querySelector(`.image-preview[data-qid="${qid}"]`);
+            if (previewContainer) {
+              const img = previewContainer.querySelector('img');
+              const reader = new FileReader();
+              reader.onload = (evt) => {
+                img.src = evt.target.result;
+                previewContainer.style.display = 'block';
+              };
+              reader.readAsDataURL(file);
+            }
+            
+            toast(`Image "${file.name}" ready. Remember to place it in Games/question-images/ folder.`);
+          } catch (err) {
+            console.error('Error handling image upload:', err);
+            toast('Error processing image file.');
+          }
+
+          // Reset file input
+          e.target.value = '';
+        });
+      }
+    });
+
+    // Populate image fields for existing questions
+    state.draft.questions.forEach((q) => {
+      if (q.image) {
+        const card = container.querySelector(`.question-card[data-qid="${q.id}"]`);
+        if (card) {
+          const imageInput = card.querySelector(`[data-kind="image"][data-qid="${q.id}"]`);
+          if (imageInput) imageInput.value = q.image;
+          
+          const previewContainer = card.querySelector(`.image-preview[data-qid="${q.id}"]`);
+          if (previewContainer) {
+            const img = previewContainer.querySelector('img');
+            img.src = q.image;
+            previewContainer.style.display = 'block';
+          }
+        }
+      }
     });
   }
 
@@ -1048,6 +1193,10 @@
       generateBtn.disabled = true;
 
       try {
+        // Calculate question type breakdown
+        const singleCount = state.draft.questions.filter(q => q.type === 'single').length;
+        const multiCount = state.draft.questions.filter(q => q.type === 'multi').length;
+        
         const response = await fetch(GENERATOR_URL, {
           method: 'POST',
           headers: {
@@ -1056,7 +1205,9 @@
           body: JSON.stringify({
             theme: listName,
             type: state.draft.listType || 'regular',
-            numQuestions: numQuestions
+            numQuestions: numQuestions,
+            singleCount: singleCount,
+            multiCount: multiCount
           })
         });
 
@@ -1081,21 +1232,23 @@
               existingQ.prompt = generatedQ.prompt || existingQ.prompt || '';
               existingQ.accepted = Array.isArray(generatedQ.accepted) ? generatedQ.accepted : (existingQ.accepted || []);
             } else {
-              // For regular questions
+              // For regular questions - respect the original question type
               existingQ.text = generatedQ.question || existingQ.text || '';
               
-              if (generatedQ.type === 'multiple' && Array.isArray(generatedQ.options) && generatedQ.options.length >= 2) {
-                existingQ.type = 'multi';
+              // Only use the generated question type if it matches the existing question type
+              if (existingQ.type === 'multi' && generatedQ.type === 'multiple' && Array.isArray(generatedQ.options) && generatedQ.options.length >= 2) {
+                // Multiple-choice question - use generated options
                 existingQ.options = generatedQ.options.slice(0, 4);
                 existingQ.correct = [0]; // First option is correct
-                delete existingQ.answer;
-                delete existingQ.alternates;
-              } else {
-                existingQ.type = 'single';
-                existingQ.answer = generatedQ.answer || existingQ.answer || '';
+              } else if (existingQ.type === 'single') {
+                // Single-answer question - use generated answer or extract from options
+                if (generatedQ.type === 'multiple' && Array.isArray(generatedQ.options) && generatedQ.options.length > 0) {
+                  // AI returned multiple choice but we need single answer - use first option as answer
+                  existingQ.answer = generatedQ.options[0] || existingQ.answer || '';
+                } else {
+                  existingQ.answer = generatedQ.answer || existingQ.answer || '';
+                }
                 existingQ.alternates = existingQ.alternates || [];
-                delete existingQ.options;
-                delete existingQ.correct;
               }
             }
           }
