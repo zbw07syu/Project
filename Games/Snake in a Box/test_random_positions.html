@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Random Snake Positions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-controls {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .results {
+      margin: 20px 0;
+    }
+    .grid-container {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #333;
+      border-radius: 5px;
+      background: white;
+    }
+    .grid {
+      display: grid;
+      gap: 2px;
+      background: #333;
+      padding: 2px;
+    }
+    .tile {
+      width: 40px;
+      height: 40px;
+      background: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .tile.head {
+      background: #ff4444;
+      color: white;
+    }
+    .tile.tail {
+      background: #4444ff;
+      color: white;
+    }
+    .tile.body {
+      background: #44ff44;
+    }
+    .tile.corner {
+      background: #ffaa00;
+    }
+    .stats {
+      margin: 20px 0;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 5px;
+    }
+    .warning {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .success {
+      color: #388e3c;
+      font-weight: bold;
+    }
+    .legend {
+      margin: 20px 0;
+      padding: 15px;
+      background: #fff3e0;
+      border-radius: 5px;
+    }
+    .legend-item {
+      display: inline-block;
+      margin: 5px 10px;
+    }
+    .legend-box {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <h1>Snake in a Box - Random Position Test</h1>
+  
+  <div class="legend">
+    <h3>Legend:</h3>
+    <div class="legend-item">
+      <span class="legend-box" style="background: #ff4444;"></span>
+      <span>Head (should NOT be in corners)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-box" style="background: #4444ff;"></span>
+      <span>Tail (should NOT be in corners)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-box" style="background: #44ff44;"></span>
+      <span>Body (CAN be in corners)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-box" style="background: #ffaa00;"></span>
+      <span>Corner Tile (will have body segments)</span>
+    </div>
+  </div>
+  
+  <div class="test-controls">
+    <h3>Generate Multiple Snakes to Test Randomness:</h3>
+    <button onclick="generateMultipleSnakes(5, 5)">Generate 5 Snakes (5x5 grid)</button>
+    <button onclick="generateMultipleSnakes(5, 6)">Generate 5 Snakes (6x6 grid)</button>
+    <button onclick="generateMultipleSnakes(5, 7)">Generate 5 Snakes (7x7 grid)</button>
+    <button onclick="clearResults()">Clear Results</button>
+  </div>
+  
+  <div class="stats" id="stats"></div>
+  <div class="results" id="results"></div>
+
+  <script>
+    // Simplified version of the snake generation logic for testing
+    function generateRandomHamiltonianPath(gridSize, timeoutMs) {
+      const totalTiles = gridSize * gridSize;
+      const visited = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
+      const path = [];
+      const startTime = Date.now();
+      
+      const startRow = Math.floor(Math.random() * gridSize);
+      const startCol = Math.floor(Math.random() * gridSize);
+      
+      function dfs(row, col) {
+        if (Date.now() - startTime > timeoutMs) {
+          return false;
+        }
+        
+        visited[row][col] = true;
+        path.push({ row, col });
+        
+        if (path.length === totalTiles) {
+          return true;
+        }
+        
+        const neighbors = [
+          { row: row - 1, col: col },
+          { row: row + 1, col: col },
+          { row: row, col: col - 1 },
+          { row: row, col: col + 1 }
+        ];
+        
+        for (let i = neighbors.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
+        }
+        
+        for (const neighbor of neighbors) {
+          const { row: nRow, col: nCol } = neighbor;
+          
+          if (nRow >= 0 && nRow < gridSize && nCol >= 0 && nCol < gridSize && !visited[nRow][nCol]) {
+            if (dfs(nRow, nCol)) {
+              return true;
+            }
+          }
+        }
+        
+        visited[row][col] = false;
+        path.pop();
+        return false;
+      }
+      
+      if (dfs(startRow, startCol)) {
+        return path;
+      }
+      
+      return [];
+    }
+    
+    function generateZigzagPath(gridSize) {
+      const path = [];
+      const startTop = Math.random() < 0.5;
+      const startLeft = Math.random() < 0.5;
+      
+      for (let i = 0; i < gridSize; i++) {
+        const row = startTop ? i : (gridSize - 1 - i);
+        const isEvenRow = i % 2 === 0;
+        const goRight = startLeft ? isEvenRow : !isEvenRow;
+        
+        if (goRight) {
+          for (let col = 0; col < gridSize; col++) {
+            path.push({ row, col });
+          }
+        } else {
+          for (let col = gridSize - 1; col >= 0; col--) {
+            path.push({ row, col });
+          }
+        }
+      }
+      
+      return path;
+    }
+    
+    function generateSnake(gridSize) {
+      const totalTiles = gridSize * gridSize;
+      let snakePath = [];
+      
+      let attempts = 0;
+      const maxAttempts = 10;
+      const timeoutPerAttempt = 200;
+      
+      while (attempts < maxAttempts && snakePath.length === 0) {
+        attempts++;
+        snakePath = generateRandomHamiltonianPath(gridSize, timeoutPerAttempt);
+        if (snakePath.length === totalTiles) {
+          break;
+        }
+      }
+      
+      if (snakePath.length !== totalTiles) {
+        snakePath = generateZigzagPath(gridSize);
+      }
+      
+      // Define corner positions
+      const corners = [
+        { row: 0, col: 0 },
+        { row: 0, col: gridSize - 1 },
+        { row: gridSize - 1, col: 0 },
+        { row: gridSize - 1, col: gridSize - 1 }
+      ];
+      
+      const isCorner = (tile) => corners.some(c => c.row === tile.row && c.col === tile.col);
+      
+      // Find valid head positions where both head and tail avoid corners
+      const validHeadIndices = [];
+      
+      for (let i = 0; i < snakePath.length; i++) {
+        const headTile = snakePath[i];
+        const tailIndex = (i - 1 + snakePath.length) % snakePath.length;
+        const tailTile = snakePath[tailIndex];
+        
+        // Valid if neither the head nor tail position is a corner
+        if (!isCorner(headTile) && !isCorner(tailTile)) {
+          validHeadIndices.push(i);
+        }
+      }
+      
+      let headIndex;
+      
+      if (validHeadIndices.length > 0) {
+        headIndex = validHeadIndices[Math.floor(Math.random() * validHeadIndices.length)];
+      } else {
+        // Fallback: at least keep head out of corner
+        const nonCornerHeadIndices = [];
+        
+        for (let i = 0; i < snakePath.length; i++) {
+          if (!isCorner(snakePath[i])) {
+            nonCornerHeadIndices.push(i);
+          }
+        }
+        
+        if (nonCornerHeadIndices.length > 0) {
+          headIndex = nonCornerHeadIndices[Math.floor(Math.random() * nonCornerHeadIndices.length)];
+        } else {
+          headIndex = Math.floor(Math.random() * snakePath.length);
+        }
+      }
+      
+      const reorderedPath = [
+        ...snakePath.slice(headIndex),
+        ...snakePath.slice(0, headIndex)
+      ];
+      snakePath = reorderedPath;
+      
+      const snakeHead = { row: snakePath[0].row, col: snakePath[0].col };
+      const snakeTail = { row: snakePath[snakePath.length - 1].row, col: snakePath[snakePath.length - 1].col };
+      
+      return {
+        path: snakePath,
+        head: snakeHead,
+        tail: snakeTail,
+        headIsCorner: isCorner(snakeHead),
+        tailIsCorner: isCorner(snakeTail),
+        corners: corners
+      };
+    }
+    
+    function visualizeSnake(snake, gridSize, index) {
+      const container = document.createElement('div');
+      container.className = 'grid-container';
+      
+      const title = document.createElement('h4');
+      title.textContent = `Snake #${index + 1}`;
+      container.appendChild(title);
+      
+      const info = document.createElement('div');
+      info.innerHTML = `
+        <div>Head: (${snake.head.row}, ${snake.head.col}) ${snake.headIsCorner ? '<span class="warning">⚠️ CORNER</span>' : '<span class="success">✓ OK</span>'}</div>
+        <div>Tail: (${snake.tail.row}, ${snake.tail.col}) ${snake.tailIsCorner ? '<span class="warning">⚠️ CORNER</span>' : '<span class="success">✓ OK</span>'}</div>
+      `;
+      container.appendChild(info);
+      
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      grid.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
+      
+      // Create grid
+      const gridData = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
+      
+      // Mark snake path (this fills ALL tiles including corners)
+      snake.path.forEach((segment, i) => {
+        if (i === 0) {
+          gridData[segment.row][segment.col] = { type: 'head', isCorner: false };
+        } else if (i === snake.path.length - 1) {
+          gridData[segment.row][segment.col] = { type: 'tail', isCorner: false };
+        } else {
+          gridData[segment.row][segment.col] = { type: 'body', isCorner: false };
+        }
+      });
+      
+      // Mark which tiles are corners (for visual indication)
+      snake.corners.forEach(corner => {
+        if (gridData[corner.row][corner.col]) {
+          gridData[corner.row][corner.col].isCorner = true;
+        }
+      });
+      
+      // Render grid
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          
+          if (gridData[r][c]) {
+            tile.classList.add(gridData[r][c].type);
+            
+            // Add corner class if this is a corner tile with body
+            if (gridData[r][c].isCorner && gridData[r][c].type === 'body') {
+              tile.classList.add('corner');
+            }
+            
+            if (gridData[r][c].type === 'head') {
+              tile.textContent = 'H';
+            } else if (gridData[r][c].type === 'tail') {
+              tile.textContent = 'T';
+            } else if (gridData[r][c].isCorner && gridData[r][c].type === 'body') {
+              tile.textContent = '◢';
+            }
+          }
+          
+          grid.appendChild(tile);
+        }
+      }
+      
+      container.appendChild(grid);
+      return container;
+    }
+    
+    function generateMultipleSnakes(count, gridSize) {
+      const resultsDiv = document.getElementById('results');
+      const statsDiv = document.getElementById('stats');
+      
+      let headInCornerCount = 0;
+      let tailInCornerCount = 0;
+      let bothInCornersCount = 0;
+      let neitherInCornersCount = 0;
+      
+      const snakes = [];
+      
+      for (let i = 0; i < count; i++) {
+        const snake = generateSnake(gridSize);
+        snakes.push(snake);
+        
+        if (snake.headIsCorner) headInCornerCount++;
+        if (snake.tailIsCorner) tailInCornerCount++;
+        if (snake.headIsCorner && snake.tailIsCorner) bothInCornersCount++;
+        if (!snake.headIsCorner && !snake.tailIsCorner) neitherInCornersCount++;
+        
+        const visualization = visualizeSnake(snake, gridSize, i);
+        resultsDiv.appendChild(visualization);
+      }
+      
+      // Display statistics
+      statsDiv.innerHTML = `
+        <h3>Statistics for ${count} snakes on ${gridSize}x${gridSize} grid:</h3>
+        <div>Head in corner: ${headInCornerCount} / ${count} (${(headInCornerCount/count*100).toFixed(1)}%)</div>
+        <div>Tail in corner: ${tailInCornerCount} / ${count} (${(tailInCornerCount/count*100).toFixed(1)}%)</div>
+        <div>Both in corners: ${bothInCornersCount} / ${count} (${(bothInCornersCount/count*100).toFixed(1)}%)</div>
+        <div class="success">Neither in corners: ${neitherInCornersCount} / ${count} (${(neitherInCornersCount/count*100).toFixed(1)}%)</div>
+        <div style="margin-top: 10px; font-weight: bold;">
+          ${neitherInCornersCount === count ? 
+            '<span class="success">✓ Perfect! All snakes have head and tail outside corners!</span>' : 
+            '<span class="warning">⚠️ Some snakes still have head or tail in corners</span>'}
+        </div>
+      `;
+    }
+    
+    function clearResults() {
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('stats').innerHTML = '';
+    }
+    
+    // Generate initial test
+    window.onload = function() {
+      generateMultipleSnakes(5, 5);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Sprite Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #2c3e50;
+      color: white;
+    }
+    .sprite-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .sprite-item {
+      text-align: center;
+      background: #34495e;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .sprite-box {
+      width: 64px;
+      height: 64px;
+      margin: 10px auto;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      border: 2px solid #7f8c8d;
+    }
+    .sprite-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #3498db;
+    }
+    .sprite-desc {
+      font-size: 12px;
+      color: #bdc3c7;
+    }
+    h2 {
+      color: #e74c3c;
+      border-bottom: 2px solid #e74c3c;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Snake Sprite Visual Reference</h1>
+  
+  <h2>Corner Sprites</h2>
+  <div class="sprite-grid">
+    <div class="sprite-item">
+      <div class="sprite-name">corner-1</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section Right angle 1 (connects left and top).png');"></div>
+      <div class="sprite-desc">Connects LEFT and TOP</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">corner-2</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section Right angle 2 (connects left and bottom).png');"></div>
+      <div class="sprite-desc">Connects LEFT and BOTTOM</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">corner-3</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section Right angle 3 (connects bottom and right).png');"></div>
+      <div class="sprite-desc">Connects BOTTOM and RIGHT</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">corner-4</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section Right angle 4 (connects top and right).png');"></div>
+      <div class="sprite-desc">Connects TOP and RIGHT</div>
+    </div>
+  </div>
+
+  <h2>Body Sprites</h2>
+  <div class="sprite-grid">
+    <div class="sprite-item">
+      <div class="sprite-name">body-horizontal</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section hoizontal (connects left and right).png');"></div>
+      <div class="sprite-desc">Connects LEFT and RIGHT</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">body-vertical</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section vertical (connects top and bottom).png');"></div>
+      <div class="sprite-desc">Connects TOP and BOTTOM</div>
+    </div>
+  </div>
+
+  <h2>Head Sprites</h2>
+  <div class="sprite-grid">
+    <div class="sprite-item">
+      <div class="sprite-name">head-up</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake head top (neck connects bottom).png.png');"></div>
+      <div class="sprite-desc">Neck connects BOTTOM</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">head-down</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake head down (neck connects top).png');"></div>
+      <div class="sprite-desc">Neck connects TOP</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">head-left</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake head left (neck connects right).png.png');"></div>
+      <div class="sprite-desc">Neck connects RIGHT</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">head-right</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake head right (neck connects left).png');"></div>
+      <div class="sprite-desc">Neck connects LEFT</div>
+    </div>
+  </div>
+
+  <h2>Tail Sprites</h2>
+  <div class="sprite-grid">
+    <div class="sprite-item">
+      <div class="sprite-name">tail-up</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake tail pointing up (connects bottom).png');"></div>
+      <div class="sprite-desc">Connects BOTTOM</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">tail-down</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake tail pointing down (connects top).png');"></div>
+      <div class="sprite-desc">Connects TOP</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">tail-left</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake tail pointing left (connects right).png');"></div>
+      <div class="sprite-desc">Connects RIGHT</div>
+    </div>
+    <div class="sprite-item">
+      <div class="sprite-name">tail-right</div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Snake tail pointing right (connects left).png');"></div>
+      <div class="sprite-desc">Connects LEFT</div>
+    </div>
+  </div>
+
+  <h2>Connection Test</h2>
+  <p>Visual test of how corners should connect:</p>
+  <div style="display: inline-block; background: #34495e; padding: 20px; border-radius: 8px;">
+    <div style="display: grid; grid-template-columns: repeat(2, 64px); gap: 0;">
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section Right angle 2 (connects left and bottom).png'); margin: 0; border: 1px solid #7f8c8d;"></div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section hoizontal (connects left and right).png'); margin: 0; border: 1px solid #7f8c8d;"></div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section Right angle 1 (connects left and top).png'); margin: 0; border: 1px solid #7f8c8d;"></div>
+      <div class="sprite-box" style="background-image: url('assets/images/snake/Body section hoizontal (connects left and right).png'); margin: 0; border: 1px solid #7f8c8d;"></div>
+    </div>
+    <div style="margin-top: 10px; font-size: 12px;">
+      Top row: corner-2 (left+bottom) → body-horizontal<br>
+      Bottom row: corner-1 (left+top) → body-horizontal<br>
+      <strong>Vertical connection: corner-2 bottom connects to corner-1 top</strong>
+    </div>
+  </div>
+
+</body>
+</html>

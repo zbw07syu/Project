@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug Grid - Snake in a Box</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    .info {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      border-left: 4px solid #ffc107;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px 5px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .grid-display {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      margin: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow-x: auto;
+    }
+    .grid-table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    .grid-table td, .grid-table th {
+      border: 2px solid #333;
+      padding: 8px;
+      text-align: center;
+      min-width: 80px;
+      font-size: 12px;
+    }
+    .grid-table th {
+      background: #666;
+      color: white;
+      font-weight: bold;
+    }
+    .grid-table .row-label {
+      background: #666;
+      color: white;
+      font-weight: bold;
+    }
+    .tile-head {
+      background: #c8e6c9;
+      font-weight: bold;
+    }
+    .tile-tail {
+      background: #ffcdd2;
+      font-weight: bold;
+    }
+    .tile-body {
+      background: #e3f2fd;
+    }
+    .tile-corner {
+      background: #fff3cd;
+      border: 3px solid #ffc107 !important;
+    }
+    .error {
+      background: #ffebee !important;
+      color: #c62828;
+      font-weight: bold;
+    }
+    .path-info {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .console-output {
+      background: #263238;
+      color: #aed581;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin: 20px 0;
+    }
+    .console-error {
+      color: #ff5252;
+    }
+    .console-warn {
+      color: #ffd740;
+    }
+    .console-success {
+      color: #69f0ae;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐛 Debug Grid - Snake in a Box</h1>
+  
+  <div class="info">
+    <strong>Purpose:</strong> This tool shows the exact grid layout with coordinates and connection information.
+    <br><strong>How to use:</strong> Click "Generate Snake" and check if adjacent tiles have matching connections.
+  </div>
+
+  <div>
+    <button onclick="generateAndDisplay()">Generate Snake</button>
+    <button onclick="clearDisplay()">Clear</button>
+  </div>
+
+  <div id="output"></div>
+  <div id="console" class="console-output" style="display: none;"></div>
+
+  <script>
+    const GRID_SIZE = 5;
+    let consoleLog = [];
+
+    // Override console methods to capture output
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.log = function(...args) {
+      consoleLog.push({ type: 'log', message: args.join(' ') });
+      originalLog.apply(console, args);
+    };
+
+    console.error = function(...args) {
+      consoleLog.push({ type: 'error', message: args.join(' ') });
+      originalError.apply(console, args);
+    };
+
+    console.warn = function(...args) {
+      consoleLog.push({ type: 'warn', message: args.join(' ') });
+      originalWarn.apply(console, args);
+    };
+
+    function generateAndDisplay() {
+      consoleLog = [];
+      const path = generateZigzagPath();
+      assignSprites(path);
+      displayGrid(path);
+      displayConsole();
+    }
+
+    function clearDisplay() {
+      document.getElementById('output').innerHTML = '';
+      document.getElementById('console').style.display = 'none';
+      consoleLog = [];
+    }
+
+    function generateZigzagPath() {
+      const path = [];
+      for (let row = 0; row < GRID_SIZE; row++) {
+        if (row % 2 === 0) {
+          for (let col = 0; col < GRID_SIZE; col++) {
+            path.push({ row, col });
+          }
+        } else {
+          for (let col = GRID_SIZE - 1; col >= 0; col--) {
+            path.push({ row, col });
+          }
+        }
+      }
+      return path;
+    }
+
+    function assignSprites(path) {
+      for (let i = 0; i < path.length; i++) {
+        const current = path[i];
+        const prev = i > 0 ? path[i - 1] : null;
+        const next = i < path.length - 1 ? path[i + 1] : null;
+
+        current.pathIndex = i;
+
+        if (i === 0) {
+          current.type = 'head';
+          current.sprite = getHeadSprite(current, next);
+        } else if (i === path.length - 1) {
+          current.type = 'tail';
+          current.sprite = getTailSprite(current, prev);
+        } else {
+          current.type = 'body';
+          const side1 = getSide(current, prev);
+          const side2 = getSide(current, next);
+          current.connections = [side1, side2].sort();
+          current.sprite = getBodySprite(side1, side2);
+        }
+      }
+    }
+
+    function getSide(from, to) {
+      if (!to) return 'none';
+      if (to.row < from.row) return 'top';
+      if (to.row > from.row) return 'bottom';
+      if (to.col < from.col) return 'left';
+      if (to.col > from.col) return 'right';
+      return 'none';
+    }
+
+    function getHeadSprite(current, next) {
+      const side = getSide(current, next);
+      if (side === 'top') return 'head-down';
+      if (side === 'bottom') return 'head-up';
+      if (side === 'left') return 'head-right';
+      if (side === 'right') return 'head-left';
+      return 'head-right';
+    }
+
+    function getTailSprite(current, prev) {
+      const side = getSide(current, prev);
+      if (side === 'top') return 'tail-down';
+      if (side === 'bottom') return 'tail-up';
+      if (side === 'left') return 'tail-right';
+      if (side === 'right') return 'tail-left';
+      return 'tail-right';
+    }
+
+    function getBodySprite(side1, side2) {
+      const sides = [side1, side2].sort().join('-');
+      if (sides === 'bottom-top') return 'body-vertical';
+      if (sides === 'left-right') return 'body-horizontal';
+      if (sides === 'left-top') return 'corner-1';
+      if (sides === 'bottom-left') return 'corner-2';
+      if (sides === 'bottom-right') return 'corner-3';
+      if (sides === 'right-top') return 'corner-4';
+      return 'body-horizontal';
+    }
+
+    function isCorner(row, col) {
+      return (row === 0 || row === GRID_SIZE - 1) && 
+             (col === 0 || col === GRID_SIZE - 1);
+    }
+
+    function getRowLabel(row) {
+      return String.fromCharCode(65 + row); // A, B, C, D, E
+    }
+
+    function displayGrid(path) {
+      // Create grid lookup
+      const grid = {};
+      path.forEach(tile => {
+        const key = `${tile.row},${tile.col}`;
+        grid[key] = tile;
+      });
+
+      let html = '<div class="grid-display">';
+      html += '<h3>Grid Layout with Connections</h3>';
+      html += '<table class="grid-table">';
+      
+      // Header row
+      html += '<tr><th></th>';
+      for (let col = 0; col < GRID_SIZE; col++) {
+        html += `<th>${col + 1}</th>`;
+      }
+      html += '</tr>';
+
+      // Grid rows
+      for (let row = 0; row < GRID_SIZE; row++) {
+        html += '<tr>';
+        html += `<td class="row-label">${getRowLabel(row)}</td>`;
+        
+        for (let col = 0; col < GRID_SIZE; col++) {
+          const key = `${row},${col}`;
+          const tile = grid[key];
+          
+          let className = 'tile-' + tile.type;
+          if (isCorner(row, col)) {
+            className += ' tile-corner';
+          }
+
+          html += `<td class="${className}">`;
+          html += `<strong>${getRowLabel(row)}${col + 1}</strong><br>`;
+          html += `${tile.sprite}<br>`;
+          
+          if (tile.type === 'body') {
+            html += `<div class="path-info">`;
+            html += `Path: ${tile.pathIndex}<br>`;
+            html += `Connects: ${tile.connections.join(', ')}`;
+            html += `</div>`;
+          } else {
+            html += `<div class="path-info">Path: ${tile.pathIndex}</div>`;
+          }
+          
+          html += '</td>';
+        }
+        html += '</tr>';
+      }
+      
+      html += '</table>';
+      html += '</div>';
+
+      // Validate connections
+      html += '<div class="grid-display">';
+      html += '<h3>Connection Validation</h3>';
+      html += validateConnections(path, grid);
+      html += '</div>';
+
+      document.getElementById('output').innerHTML = html;
+    }
+
+    function validateConnections(path, grid) {
+      let html = '<table class="grid-table">';
+      html += '<tr><th>Tile</th><th>Sprite</th><th>Connects To</th><th>Status</th></tr>';
+      
+      let errors = 0;
+
+      for (let i = 1; i < path.length - 1; i++) {
+        const current = path[i];
+        const prev = path[i - 1];
+        const next = path[i + 1];
+
+        const prevSide = getSide(current, prev);
+        const nextSide = getSide(current, next);
+        const connections = [prevSide, nextSide].sort();
+
+        // Check if sprite matches connections
+        let isValid = true;
+        let expectedSprite = '';
+
+        if (connections.join('-') === 'bottom-top') {
+          expectedSprite = 'body-vertical';
+          if (current.sprite !== 'body-vertical') isValid = false;
+        } else if (connections.join('-') === 'left-right') {
+          expectedSprite = 'body-horizontal';
+          if (current.sprite !== 'body-horizontal') isValid = false;
+        } else {
+          expectedSprite = 'corner-*';
+          if (!current.sprite.startsWith('corner-')) isValid = false;
+        }
+
+        const rowClass = isValid ? '' : 'error';
+        const status = isValid ? '✓ Valid' : `✗ ERROR: Expected ${expectedSprite}`;
+        
+        if (!isValid) errors++;
+
+        html += `<tr class="${rowClass}">`;
+        html += `<td>${getRowLabel(current.row)}${current.col + 1} (${current.row},${current.col})</td>`;
+        html += `<td>${current.sprite}</td>`;
+        html += `<td>${connections.join(' + ')}</td>`;
+        html += `<td>${status}</td>`;
+        html += '</tr>';
+      }
+
+      html += '</table>';
+      
+      if (errors > 0) {
+        html += `<p class="console-error"><strong>❌ Found ${errors} connection errors!</strong></p>`;
+      } else {
+        html += `<p class="console-success"><strong>✓ All connections are valid!</strong></p>`;
+      }
+
+      return html;
+    }
+
+    function displayConsole() {
+      const consoleDiv = document.getElementById('console');
+      if (consoleLog.length === 0) {
+        consoleDiv.style.display = 'none';
+        return;
+      }
+
+      consoleDiv.style.display = 'block';
+      let html = '<strong>Console Output:</strong><br><br>';
+      
+      consoleLog.forEach(entry => {
+        const className = entry.type === 'error' ? 'console-error' : 
+                         entry.type === 'warn' ? 'console-warn' : 
+                         'console-success';
+        html += `<div class="${className}">${entry.message}</div>`;
+      });
+
+      consoleDiv.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

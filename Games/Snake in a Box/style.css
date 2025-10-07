@@ -1,0 +1,537 @@
+/* General */
+html {
+  overflow-y: hidden;
+}
+
+body {
+  font-family: 'Bangers', cursive;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: url('snakebg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  overflow-y: hidden;
+}
+
+/* Hide scrollbars during victory effects */
+body.victory-active {
+  overflow: hidden !important;
+}
+
+html.victory-active {
+  overflow: hidden !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#gameTitle {
+  font-size: 48px;
+  color: #ffd54a;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+  margin: 20px 0;
+  text-align: center;
+}
+
+#gameContainer {
+  display: flex;
+  gap: 20px;
+  max-width: 1400px;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Left Panel */
+#leftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+}
+
+#leftPanel button {
+  font-family: 'Bangers', cursive;
+  font-size: 18px;
+  padding: 12px;
+  background-color: #ffd54a;
+  border: 3px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #000;
+}
+
+#leftPanel button:hover {
+  background-color: #ffca28;
+  transform: scale(1.05);
+}
+
+#leftPanel button:active {
+  transform: scale(0.95);
+}
+
+/* Center Panel */
+#centerPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Grid Wrapper with Coordinates */
+#gridWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#gridWithRows {
+  display: flex;
+  align-items: center;
+}
+
+#columnLabels {
+  display: flex;
+  margin-left: 40px;
+  margin-bottom: 5px;
+}
+
+#columnLabels span {
+  /* width set dynamically in JS based on grid size */
+  margin: 0 2px;
+  text-align: center;
+  font-size: 18px;
+  color: #ffd54a;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
+}
+
+#rowLabels {
+  display: flex;
+  flex-direction: column;
+  margin-right: 5px;
+}
+
+#rowLabels span {
+  /* height set dynamically in JS based on grid size */
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #ffd54a;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
+  width: 30px;
+}
+
+/* Grid */
+#grid {
+  display: grid;
+  gap: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 8px;
+  border: 3px solid #333;
+}
+
+.grid-tile {
+  /* width and height set dynamically in JS based on grid size */
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #666;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.grid-tile.covered {
+  background-image: url('assets/images/snake/covered.png');
+}
+
+.grid-tile.covered:hover {
+  transform: scale(1.1);
+  border-color: #ffd54a;
+  box-shadow: 0 0 10px rgba(255, 213, 74, 0.8);
+}
+
+.grid-tile.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.grid-tile.revealed {
+  cursor: default;
+  animation: revealTile 0.5s ease-out;
+}
+
+@keyframes revealTile {
+  0% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: rotateY(90deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+/* Snake Head Sprites */
+.grid-tile.head-up {
+  background-image: url('assets/images/snake/Snake head top (neck connects bottom).png.png');
+  border-color: #ff6b6b;
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+}
+
+.grid-tile.head-down {
+  background-image: url('assets/images/snake/Snake head down (neck connects top).png');
+  border-color: #ff6b6b;
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+}
+
+.grid-tile.head-left {
+  background-image: url('assets/images/snake/Snake head left (neck connects right).png.png');
+  border-color: #ff6b6b;
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+}
+
+.grid-tile.head-right {
+  background-image: url('assets/images/snake/Snake head right (neck connects left).png');
+  border-color: #ff6b6b;
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+}
+
+/* Snake Tail Sprites */
+.grid-tile.tail-up {
+  background-image: url('assets/images/snake/Snake tail pointing up (connects bottom).png');
+  border-color: #4a90e2;
+  box-shadow: 0 0 15px rgba(74, 144, 226, 0.8);
+}
+
+.grid-tile.tail-down {
+  background-image: url('assets/images/snake/Snake tail pointing down (connects top).png');
+  border-color: #4a90e2;
+  box-shadow: 0 0 15px rgba(74, 144, 226, 0.8);
+}
+
+.grid-tile.tail-left {
+  background-image: url('assets/images/snake/Snake tail pointing left (connects right).png');
+  border-color: #4a90e2;
+  box-shadow: 0 0 15px rgba(74, 144, 226, 0.8);
+}
+
+.grid-tile.tail-right {
+  background-image: url('assets/images/snake/Snake tail pointing right (connects left).png');
+  border-color: #4a90e2;
+  box-shadow: 0 0 15px rgba(74, 144, 226, 0.8);
+}
+
+/* Snake Body Sprites */
+.grid-tile.body-horizontal {
+  background-image: url('assets/images/snake/Body section hoizontal (connects left and right).png');
+}
+
+.grid-tile.body-vertical {
+  background-image: url('assets/images/snake/Body section vertical (connects top and bottom).png');
+}
+
+/* Snake Corner Sprites */
+.grid-tile.corner-1 {
+  background-image: url('assets/images/snake/Body section Right angle 1 (connects left and top).png');
+}
+
+.grid-tile.corner-2 {
+  background-image: url('assets/images/snake/Body section Right angle 2 (connects left and bottom).png');
+}
+
+.grid-tile.corner-3 {
+  background-image: url('assets/images/snake/Body section Right angle 3 (connects bottom and right).png');
+}
+
+.grid-tile.corner-4 {
+  background-image: url('assets/images/snake/Body section Right angle 4 (connects top and right).png');
+}
+
+/* Coordinate labels */
+.coord-label {
+  font-family: 'Bangers', cursive;
+  font-size: 18px;
+  color: #ffd54a;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Question Area */
+#questionArea {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.messageBox {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 3px solid #333;
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 20px;
+  text-align: center;
+  min-height: 30px;
+  color: #000;
+}
+
+#message1 {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Roll Dice Button */
+#rollDiceBtn {
+  font-family: 'Bangers', cursive;
+  font-size: 28px;
+  padding: 15px 30px;
+  background-color: #ff6b6b;
+  border: 3px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 10px auto;
+  display: block;
+}
+
+#rollDiceBtn:hover {
+  background-color: #ff5252;
+  transform: scale(1.05);
+}
+
+#rollDiceBtn:active {
+  transform: scale(0.95);
+}
+
+/* Right Panel - Scoreboard */
+#scorePanel {
+  min-width: 200px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 3px solid #333;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+#scores {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#scores li {
+  font-size: 22px;
+  padding: 10px;
+  margin: 5px 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid #666;
+  border-radius: 6px;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s;
+}
+
+#scores li.current-turn {
+  background-color: rgba(255, 213, 74, 0.3);
+  border-color: #ffd54a;
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255, 213, 74, 0.6);
+}
+
+#scores li.team-red {
+  border-left: 5px solid #ff6b6b;
+}
+
+#scores li.team-blue {
+  border-left: 5px solid #4a90e2;
+}
+
+#scores li.team-green {
+  border-left: 5px solid #4caf50;
+}
+
+#scores li.team-yellow {
+  border-left: 5px solid #ffd54a;
+}
+
+/* Modals */
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modalContent {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  font-family: 'Bangers', cursive;
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+  border: 3px solid #333;
+}
+
+.modal.show .modalContent {
+  transform: translateY(0);
+}
+
+.modalContent h2 {
+  margin-top: 0;
+  font-size: 32px;
+  color: #333;
+}
+
+.modalContent p {
+  margin: 15px 0;
+  font-size: 20px;
+  color: #666;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.vpBtn {
+  font-family: 'Bangers', cursive;
+  font-size: 28px;
+  width: 80px;
+  height: 60px;
+  cursor: pointer;
+  border: 3px solid #333;
+  border-radius: 8px;
+  background-color: #ffd54a;
+  color: #000;
+  transition: all 0.2s;
+}
+
+.vpBtn:hover {
+  background-color: #ffca28;
+  transform: scale(1.1);
+}
+
+.vpBtn:active {
+  transform: scale(0.95);
+}
+
+.modalContent.rules {
+  width: 600px;
+  max-width: 90%;
+}
+
+.modalContent.rules ol {
+  text-align: left;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.modalContent.rules button {
+  font-family: 'Bangers', cursive;
+  font-size: 24px;
+  padding: 10px 30px;
+  margin-top: 20px;
+  background-color: #ffd54a;
+  border: 3px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modalContent.rules button:hover {
+  background-color: #ffca28;
+  transform: scale(1.05);
+}
+
+/* Confetti Canvas */
+#confettiCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: transparent !important;
+}
+
+#confettiCanvas.show {
+  opacity: 1;
+}
+
+/* Strobe Overlay */
+#strobeOverlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1999;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.1s;
+}
+
+#strobeOverlay.show {
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  #gameContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  #leftPanel, #scorePanel {
+    width: 100%;
+    max-width: 600px;
+  }
+  
+  #leftPanel {
+    flex-direction: row;
+    justify-content: center;
+  }
+}

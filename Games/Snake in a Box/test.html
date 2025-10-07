@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake in a Box - Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-left: 4px solid #2196F3;
+      margin: 15px 0;
+    }
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake in a Box - Test Page</h1>
+  
+  <div class="test-section">
+    <h2>Quick Start</h2>
+    <p>Click one of the buttons below to launch the game with sample questions:</p>
+    <button onclick="launchWithQuestions()">Launch Game with Sample Questions</button>
+    <button onclick="launchWithoutQuestions()">Launch Game without Questions</button>
+  </div>
+
+  <div class="test-section">
+    <h2>Game Features to Test</h2>
+    <ul>
+      <li><strong>Team Selection:</strong> Choose 2, 3, or 4 teams</li>
+      <li><strong>Grid Size:</strong> Verify correct grid size (5×5, 6×6, or 7×7)</li>
+      <li><strong>Coordinate Labels:</strong> Check letters (A-G) on top and numbers (1-7) on left</li>
+      <li><strong>Dice Rolling:</strong> All teams roll dice at start of each round</li>
+      <li><strong>Turn Order:</strong> Highest roll goes first, displayed in scoreboard</li>
+      <li><strong>Questions:</strong> Lowest roll team must answer a question</li>
+      <li><strong>Tile Uncovering:</strong> Click tiles to reveal snake parts</li>
+      <li><strong>Scoring:</strong> +1 point for finding head or tail</li>
+      <li><strong>Current Turn Highlight:</strong> Active team highlighted in scoreboard</li>
+      <li><strong>Game End:</strong> When both head and tail are found</li>
+      <li><strong>Victory:</strong> Winner(s) announced with celebration</li>
+      <li><strong>Audio:</strong> Background music and dice sound effects</li>
+      <li><strong>Controls:</strong> Mute/Unmute, Restart, Rules buttons</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>Sample Questions Format</h2>
+    <div class="info">
+      <strong>Note:</strong> Questions are passed via URL hash parameter in JSON format.
+    </div>
+    <pre id="sampleJson"></pre>
+  </div>
+
+  <div class="test-section">
+    <h2>Expected Behavior</h2>
+    <ol>
+      <li><strong>Game Start:</strong> Team selection modal appears</li>
+      <li><strong>After Team Selection:</strong> Game initializes with correct grid size</li>
+      <li><strong>Round Start:</strong> "Roll Dice" button appears</li>
+      <li><strong>After Dice Roll:</strong> 
+        <ul>
+          <li>All team rolls displayed</li>
+          <li>Turn order shown in scoreboard</li>
+          <li>Lowest roll team gets a question</li>
+        </ul>
+      </li>
+      <li><strong>Question Modal:</strong>
+        <ul>
+          <li>Shows question text</li>
+          <li>Shows turn indicator (e.g., "Red Team must answer")</li>
+          <li>Multiple choice options</li>
+          <li>Feedback on correct/incorrect answer</li>
+        </ul>
+      </li>
+      <li><strong>Tile Uncovering:</strong>
+        <ul>
+          <li>Teams take turns in order</li>
+          <li>Current team highlighted in scoreboard</li>
+          <li>Tile flips with animation</li>
+          <li>Snake part revealed (head/tail/body)</li>
+          <li>Score updates if head or tail found</li>
+        </ul>
+      </li>
+      <li><strong>New Round:</strong> When all teams have had a turn, new dice roll</li>
+      <li><strong>Game End:</strong> When both head and tail found
+        <ul>
+          <li>Winner(s) announced</li>
+          <li>Victory celebration plays</li>
+          <li>Confetti and effects</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>Visual Elements to Verify</h2>
+    <ul>
+      <li>✅ Bangers font used throughout</li>
+      <li>✅ Color-coded teams (red, blue, green, yellow)</li>
+      <li>✅ Grid with coordinate labels</li>
+      <li>✅ Covered tiles show question mark</li>
+      <li>✅ Revealed tiles show snake parts</li>
+      <li>✅ Smooth flip animation on reveal</li>
+      <li>✅ Current turn highlighted in scoreboard</li>
+      <li>✅ Three message boxes for game status</li>
+      <li>✅ Control buttons in left panel</li>
+      <li>✅ Scoreboard in right panel</li>
+    </ul>
+  </div>
+
+  <script>
+    // Sample questions for testing
+    const sampleQuestions = {
+      id: "test-123",
+      name: "Sample Quiz",
+      listType: "regular",
+      questions: [
+        {
+          type: "multiple-choice",
+          text: "What is the capital of France?",
+          options: ["London", "Paris", "Berlin", "Madrid"],
+          answer: "Paris"
+        },
+        {
+          type: "multiple-choice",
+          text: "What is 2 + 2?",
+          options: ["3", "4", "5", "6"],
+          answer: "4"
+        },
+        {
+          type: "multiple-choice",
+          text: "Which planet is known as the Red Planet?",
+          options: ["Venus", "Mars", "Jupiter", "Saturn"],
+          answer: "Mars"
+        },
+        {
+          type: "multiple-choice",
+          text: "What is the largest ocean on Earth?",
+          options: ["Atlantic", "Indian", "Arctic", "Pacific"],
+          answer: "Pacific"
+        },
+        {
+          type: "multiple-choice",
+          text: "How many continents are there?",
+          options: ["5", "6", "7", "8"],
+          answer: "7"
+        },
+        {
+          type: "multiple-choice",
+          text: "What is the smallest prime number?",
+          options: ["0", "1", "2", "3"],
+          answer: "2"
+        },
+        {
+          type: "multiple-choice",
+          text: "Which animal is known as the 'King of the Jungle'?",
+          options: ["Tiger", "Lion", "Elephant", "Bear"],
+          answer: "Lion"
+        },
+        {
+          type: "multiple-choice",
+          text: "What is the chemical symbol for water?",
+          options: ["H2O", "CO2", "O2", "N2"],
+          answer: "H2O"
+        }
+      ]
+    };
+
+    // Display sample JSON
+    document.getElementById('sampleJson').textContent = JSON.stringify(sampleQuestions, null, 2);
+
+    function launchWithQuestions() {
+      const questionsJson = JSON.stringify(sampleQuestions);
+      const hash = '#questions=' + encodeURIComponent(questionsJson);
+      window.open('index.html' + hash, '_blank');
+    }
+
+    function launchWithoutQuestions() {
+      window.open('index.html', '_blank');
+    }
+  </script>
+</body>
+</html>

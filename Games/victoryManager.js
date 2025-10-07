@@ -108,6 +108,10 @@
     try {
       console.log('🎊 VictoryManager.playVictorySequence called with options:', options);
       
+      // Hide scrollbars during victory effects
+      document.documentElement.classList.add('victory-active');
+      document.body.classList.add('victory-active');
+      
       // Get mute state
       isMuted = options.muted || (options.getMuteState && options.getMuteState()) || false;
 
@@ -155,6 +159,10 @@
    */
   function stopVictorySequence() {
     try {
+      // Restore scrollbars
+      document.documentElement.classList.remove('victory-active');
+      document.body.classList.remove('victory-active');
+      
       // Stop animated text overlay
       stopAnimatedTextOverlay();
 

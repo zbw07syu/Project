@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Path Debugger</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    
+    h1 {
+      color: #4CAF50;
+    }
+    
+    .controls {
+      margin: 20px 0;
+    }
+    
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-right: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background: #45a049;
+    }
+    
+    .grid-container {
+      display: inline-block;
+      margin: 20px;
+      vertical-align: top;
+    }
+    
+    .grid {
+      display: grid;
+      gap: 2px;
+      background: #333;
+      padding: 2px;
+      border: 2px solid #666;
+    }
+    
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      position: relative;
+    }
+    
+    .cell.corner {
+      background: #4a3a00;
+    }
+    
+    .cell .coord {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 8px;
+      color: #888;
+    }
+    
+    .cell .order {
+      font-size: 14px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    
+    .cell .sprite {
+      font-size: 20px;
+      margin-top: 2px;
+    }
+    
+    .cell .connections {
+      font-size: 8px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+    
+    .cell.head {
+      background: #1a4d1a;
+      border: 2px solid #4CAF50;
+    }
+    
+    .cell.tail {
+      background: #4d1a1a;
+      border: 2px solid #f44336;
+    }
+    
+    .info {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      max-width: 800px;
+    }
+    
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+    
+    .warning {
+      color: #ff9800;
+    }
+    
+    .success {
+      color: #4CAF50;
+    }
+    
+    .legend {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      max-width: 600px;
+    }
+    
+    .legend-item {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake Path Debugger</h1>
+  
+  <div class="legend">
+    <h3>Legend:</h3>
+    <div class="legend-item">📍 <strong>Coordinate</strong>: Grid position (e.g., C6 = col 2, row 5)</div>
+    <div class="legend-item">🔢 <strong>Order</strong>: Position in snake path (0 = head, last = tail)</div>
+    <div class="legend-item">🎨 <strong>Sprite</strong>: Visual symbol (━ horizontal, ┃ vertical, ◢◣◤◥ corners)</div>
+    <div class="legend-item">🔗 <strong>Connections</strong>: Which sides connect (T=top, B=bottom, L=left, R=right)</div>
+    <div class="legend-item" style="background: #4a3a00; padding: 5px;">🟨 <strong>Yellow</strong>: Corner tiles (must have bend pieces)</div>
+    <div class="legend-item" style="background: #1a4d1a; padding: 5px;">🟩 <strong>Green</strong>: Snake head</div>
+    <div class="legend-item" style="background: #4d1a1a; padding: 5px;">🟥 <strong>Red</strong>: Snake tail</div>
+  </div>
+  
+  <div class="controls">
+    <label>Grid Size: 
+      <select id="gridSizeSelect" onchange="changeGridSize()">
+        <option value="5">5x5 (2 players)</option>
+        <option value="6">6x6 (3 players)</option>
+        <option value="7">7x7 (4 players)</option>
+        <option value="8" selected>8x8 (debug)</option>
+      </select>
+    </label>
+    <button onclick="generateNewSnake()">Generate New Snake</button>
+    <button onclick="checkForIssues()">Check for Issues</button>
+  </div>
+  
+  <div id="output"></div>
+  
+  <script>
+    let gridSize = 8;
+    let snakePath = [];
+    let grid = [];
+    
+    // Copy the exact functions from game.js
+    function generateRandomHamiltonianPath(timeoutMs) {
+      const totalTiles = gridSize * gridSize;
+      const visited = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
+      const path = [];
+      const startTime = Date.now();
+      
+      const startRow = Math.floor(Math.random() * gridSize);
+      const startCol = Math.floor(Math.random() * gridSize);
+      
+      function dfs(row, col) {
+        if (Date.now() - startTime > timeoutMs) {
+          return false;
+        }
+        
+        visited[row][col] = true;
+        path.push({ row, col });
+        
+        if (path.length === totalTiles) {
+          return true;
+        }
+        
+        const neighbors = [
+          { row: row - 1, col: col },
+          { row: row + 1, col: col },
+          { row: row, col: col - 1 },
+          { row: row, col: col + 1 }
+        ];
+        
+        for (let i = neighbors.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
+        }
+        
+        for (const neighbor of neighbors) {
+          const { row: nRow, col: nCol } = neighbor;
+          
+          if (nRow >= 0 && nRow < gridSize && nCol >= 0 && nCol < gridSize && !visited[nRow][nCol]) {
+            if (dfs(nRow, nCol)) {
+              return true;
+            }
+          }
+        }
+        
+        visited[row][col] = false;
+        path.pop();
+        return false;
+      }
+      
+      if (dfs(startRow, startCol)) {
+        return path;
+      }
+      
+      return [];
+    }
+    
+    function getSideToConnect(from, to) {
+      const rowDiff = Math.abs(to.row - from.row);
+      const colDiff = Math.abs(to.col - from.col);
+      
+      if (rowDiff + colDiff !== 1) {
+        return 'none';
+      }
+      
+      if (to.row < from.row) return 'top';
+      if (to.row > from.row) return 'bottom';
+      if (to.col < from.col) return 'left';
+      if (to.col > from.col) return 'right';
+      return 'none';
+    }
+    
+    function getCornerSprite(side1, side2) {
+      const sides = [side1, side2].sort().join('-');
+      
+      const cornerMap = {
+        'left-top': 'corner-1',
+        'bottom-left': 'corner-2',
+        'bottom-right': 'corner-3',
+        'right-top': 'corner-4'
+      };
+      
+      return cornerMap[sides] || 'body-horizontal';
+    }
+    
+    function assignSnakeSprites() {
+      for (let i = 0; i < snakePath.length; i++) {
+        const current = snakePath[i];
+        const prev = i > 0 ? snakePath[i - 1] : null;
+        const next = i < snakePath.length - 1 ? snakePath[i + 1] : null;
+        
+        if (i === 0) {
+          current.type = 'head';
+          if (next) {
+            const neckSide = getSideToConnect(current, next);
+            if (neckSide === 'top') current.sprite = 'head-down';
+            else if (neckSide === 'bottom') current.sprite = 'head-up';
+            else if (neckSide === 'left') current.sprite = 'head-right';
+            else if (neckSide === 'right') current.sprite = 'head-left';
+          } else {
+            current.sprite = 'head-right';
+          }
+        } else if (i === snakePath.length - 1) {
+          current.type = 'tail';
+          if (prev) {
+            const connectSide = getSideToConnect(current, prev);
+            if (connectSide === 'top') current.sprite = 'tail-down';
+            else if (connectSide === 'bottom') current.sprite = 'tail-up';
+            else if (connectSide === 'left') current.sprite = 'tail-right';
+            else if (connectSide === 'right') current.sprite = 'tail-left';
+          } else {
+            current.sprite = 'tail-right';
+          }
+        } else {
+          current.type = 'body';
+          
+          const side1 = getSideToConnect(current, prev);
+          const side2 = getSideToConnect(current, next);
+          
+          const sides = [side1, side2].sort();
+          const sideKey = sides.join('-');
+          
+          if (sideKey === 'bottom-top') {
+            current.sprite = 'body-vertical';
+          } else if (sideKey === 'left-right') {
+            current.sprite = 'body-horizontal';
+          } else {
+            current.sprite = getCornerSprite(side1, side2);
+          }
+        }
+      }
+    }
+    
+    function getCoordName(row, col) {
+      const letter = String.fromCharCode(65 + col);
+      const number = row + 1;
+      return `${letter}${number}`;
+    }
+    
+    function getSpriteSymbol(sprite) {
+      const symbols = {
+        'body-horizontal': '━',
+        'body-vertical': '┃',
+        'corner-1': '◢',
+        'corner-2': '◣',
+        'corner-3': '◤',
+        'corner-4': '◥',
+        'head-up': '▲',
+        'head-down': '▼',
+        'head-left': '◀',
+        'head-right': '▶',
+        'tail-up': '△',
+        'tail-down': '▽',
+        'tail-left': '◁',
+        'tail-right': '▷'
+      };
+      return symbols[sprite] || '?';
+    }
+    
+    function generateZigzagPath() {
+      const path = [];
+      
+      const startTop = Math.random() < 0.5;
+      const startLeft = Math.random() < 0.5;
+      
+      for (let i = 0; i < gridSize; i++) {
+        const row = startTop ? i : (gridSize - 1 - i);
+        const isEvenRow = i % 2 === 0;
+        const goRight = startLeft ? isEvenRow : !isEvenRow;
+        
+        if (goRight) {
+          for (let col = 0; col < gridSize; col++) {
+            path.push({ row, col });
+          }
+        } else {
+          for (let col = gridSize - 1; col >= 0; col--) {
+            path.push({ row, col });
+          }
+        }
+      }
+      
+      return path;
+    }
+    
+    function generateNewSnake() {
+      console.log('Generating new snake...');
+      
+      // Try random path first (with shorter timeout for 8x8)
+      snakePath = generateRandomHamiltonianPath(500);
+      
+      if (snakePath.length === 0) {
+        console.log('Random generation timed out, using zigzag pattern...');
+        snakePath = generateZigzagPath();
+      }
+      
+      if (snakePath.length === 0) {
+        alert('Failed to generate path!');
+        return;
+      }
+      
+      console.log(`Generated path with ${snakePath.length} tiles`);
+      assignSnakeSprites();
+      displayGrid();
+      checkForIssues();
+    }
+    
+    function displayGrid() {
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+      
+      const container = document.createElement('div');
+      container.className = 'grid-container';
+      
+      const gridDiv = document.createElement('div');
+      gridDiv.className = 'grid';
+      gridDiv.style.gridTemplateColumns = `repeat(${gridSize}, 60px)`;
+      
+      // Create a lookup map for quick access
+      const pathMap = {};
+      snakePath.forEach((seg, idx) => {
+        const key = `${seg.row},${seg.col}`;
+        pathMap[key] = { ...seg, order: idx };
+      });
+      
+      // Define corners
+      const corners = [
+        { row: 0, col: 0 },
+        { row: 0, col: gridSize - 1 },
+        { row: gridSize - 1, col: 0 },
+        { row: gridSize - 1, col: gridSize - 1 }
+      ];
+      
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          
+          const key = `${row},${col}`;
+          const segment = pathMap[key];
+          
+          const isCorner = corners.some(c => c.row === row && c.col === col);
+          if (isCorner) {
+            cell.classList.add('corner');
+          }
+          
+          if (segment) {
+            const coord = document.createElement('div');
+            coord.className = 'coord';
+            coord.textContent = getCoordName(row, col);
+            
+            const order = document.createElement('div');
+            order.className = 'order';
+            order.textContent = segment.order;
+            
+            const sprite = document.createElement('div');
+            sprite.className = 'sprite';
+            sprite.textContent = getSpriteSymbol(segment.sprite);
+            
+            const connections = document.createElement('div');
+            connections.className = 'connections';
+            
+            const prev = segment.order > 0 ? snakePath[segment.order - 1] : null;
+            const next = segment.order < snakePath.length - 1 ? snakePath[segment.order + 1] : null;
+            
+            let connText = '';
+            if (prev) {
+              const side = getSideToConnect(segment, prev);
+              connText += side[0].toUpperCase();
+            }
+            if (next) {
+              if (connText) connText += '+';
+              const side = getSideToConnect(segment, next);
+              connText += side[0].toUpperCase();
+            }
+            connections.textContent = connText;
+            
+            if (segment.type === 'head') {
+              cell.classList.add('head');
+            } else if (segment.type === 'tail') {
+              cell.classList.add('tail');
+            }
+            
+            cell.appendChild(coord);
+            cell.appendChild(order);
+            cell.appendChild(sprite);
+            cell.appendChild(connections);
+          }
+          
+          gridDiv.appendChild(cell);
+        }
+      }
+      
+      container.appendChild(gridDiv);
+      output.appendChild(container);
+    }
+    
+    function checkForIssues() {
+      const info = document.createElement('div');
+      info.className = 'info';
+      
+      let html = '<h3>Diagnostic Report:</h3>';
+      let errorCount = 0;
+      let warningCount = 0;
+      
+      // Check path connectivity first
+      html += '<h4>Path Connectivity:</h4>';
+      for (let i = 1; i < snakePath.length; i++) {
+        const prev = snakePath[i - 1];
+        const curr = snakePath[i];
+        
+        const rowDiff = Math.abs(curr.row - prev.row);
+        const colDiff = Math.abs(curr.col - prev.col);
+        
+        if (rowDiff + colDiff !== 1) {
+          const prevCoord = getCoordName(prev.row, prev.col);
+          const currCoord = getCoordName(curr.row, curr.col);
+          html += `<div class="error">❌ ERROR: Non-adjacent tiles in path: ${prevCoord} [${i-1}] → ${currCoord} [${i}] (rowDiff=${rowDiff}, colDiff=${colDiff})</div>`;
+          errorCount++;
+        }
+      }
+      
+      if (errorCount === 0) {
+        html += '<div class="success">✓ All consecutive tiles are adjacent</div>';
+      }
+      
+      // Check corners
+      html += '<h4>Corner Pieces:</h4>';
+      const corners = [
+        { row: 0, col: 0 },
+        { row: 0, col: gridSize - 1 },
+        { row: gridSize - 1, col: 0 },
+        { row: gridSize - 1, col: gridSize - 1 }
+      ];
+      
+      corners.forEach(corner => {
+        const segment = snakePath.find(s => s.row === corner.row && s.col === corner.col);
+        if (segment) {
+          const coord = getCoordName(corner.row, corner.col);
+          if (segment.sprite === 'body-horizontal' || segment.sprite === 'body-vertical') {
+            html += `<div class="error">❌ ERROR: Corner ${coord} has straight piece (${segment.sprite})</div>`;
+            errorCount++;
+          } else if (segment.sprite.startsWith('corner')) {
+            html += `<div class="success">✓ Corner ${coord} has valid bend piece (${segment.sprite})</div>`;
+          } else if (segment.type === 'head' || segment.type === 'tail') {
+            html += `<div class="warning">⚠️ WARNING: Corner ${coord} has ${segment.type}</div>`;
+            warningCount++;
+          }
+        }
+      });
+      
+      // Check sprite assignments
+      html += '<h4>Sprite Assignments:</h4>';
+      for (let i = 1; i < snakePath.length - 1; i++) {
+        const curr = snakePath[i];
+        const prev = snakePath[i - 1];
+        const next = snakePath[i + 1];
+        
+        const side1 = getSideToConnect(curr, prev);
+        const side2 = getSideToConnect(curr, next);
+        const sides = [side1, side2].sort();
+        const sideKey = sides.join('-');
+        
+        const coord = getCoordName(curr.row, curr.col);
+        
+        if (sideKey === 'bottom-top' && curr.sprite !== 'body-vertical') {
+          html += `<div class="error">❌ ERROR: ${coord} [${i}] should be vertical but is ${curr.sprite}</div>`;
+          errorCount++;
+        } else if (sideKey === 'left-right' && curr.sprite !== 'body-horizontal') {
+          html += `<div class="error">❌ ERROR: ${coord} [${i}] should be horizontal but is ${curr.sprite}</div>`;
+          errorCount++;
+        }
+      }
+      
+      html += `<div style="margin-top: 15px; font-weight: bold;">`;
+      if (errorCount === 0 && warningCount === 0) {
+        html += `<span class="success">✓ No issues found! Path is valid.</span>`;
+      } else {
+        html += `<span class="error">${errorCount} errors</span>, `;
+        html += `<span class="warning">${warningCount} warnings</span>`;
+      }
+      html += `</div>`;
+      
+      info.innerHTML = html;
+      document.getElementById('output').appendChild(info);
+    }
+    
+    function changeGridSize() {
+      const select = document.getElementById('gridSizeSelect');
+      gridSize = parseInt(select.value);
+      generateNewSnake();
+    }
+    
+    // Generate initial snake
+    generateNewSnake();
+  </script>
+</body>
+</html>

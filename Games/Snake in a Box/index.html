@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake in a Box</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Font: Bangers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&display=swap">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="gameTitle">Snake in a Box</h1>
+
+  <div id="gameContainer">
+    <!-- Left Panel -->
+    <div id="leftPanel">
+      <button id="muteBtn">Mute/Unmute Music</button>
+      <button id="restartBtn">Restart</button>
+      <button id="rulesBtn">Rules</button>
+    </div>
+
+    <!-- Center: Grid + Question Area -->
+    <div id="centerPanel">
+      <div id="gridWrapper">
+        <div id="columnLabels" class="coordinate-labels"></div>
+        <div id="gridWithRows">
+          <div id="rowLabels" class="coordinate-labels"></div>
+          <div id="grid" aria-label="Game grid"></div>
+        </div>
+      </div>
+      <div id="questionArea">
+        <div id="message1" class="messageBox" aria-live="polite">Welcome to Snake in a Box!</div>
+        <div id="message2" class="messageBox"></div>
+        <div id="message3" class="messageBox"></div>
+      </div>
+    </div>
+
+    <!-- Right: Scoreboard -->
+    <div id="scorePanel">
+      <ul id="scores"></ul>
+    </div>
+  </div>
+
+  <canvas id="confettiCanvas" class="hidden" aria-hidden="true"></canvas>
+  <div id="strobeOverlay" class="hidden" aria-hidden="true"></div>
+
+  <!-- Audio -->
+  <audio id="bgMusic" src="alwaysloveyou.mp3" loop></audio>
+  <audio id="diceSfx" src="dice.wav"></audio>
+
+  <!-- Setup Modals -->
+  <div id="teamCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of teams</h2>
+      <div class="modalButtons">
+        <button class="vpBtn teamCountBtn" data-teams="2">2</button>
+        <button class="vpBtn teamCountBtn" data-teams="3">3</button>
+        <button class="vpBtn teamCountBtn" data-teams="4">4</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules -->
+  <div id="rulesPanel" class="modal">
+    <div class="modalContent rules">
+      <h2>How to Play</h2>
+      <ol>
+        <li>At the start of each turn, all teams roll dice to determine turn order (highest first, lowest last).</li>
+        <li>The team with the lowest roll must answer a question.</li>
+        <li>After the dice roll, teams take turns uncovering one tile from the grid.</li>
+        <li>The grid contains a coiled snake with a head and tail hidden among body segments.</li>
+        <li>Teams score points by finding the snake head or tail.</li>
+        <li>The game ends when both the head and tail are revealed.</li>
+        <li>The team(s) with the most points win!</li>
+      </ol>
+      <button id="closeRules">Close</button>
+    </div>
+  </div>
+
+  <script src="../shared-modal.js"></script>
+  <script src="../victoryManager.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
