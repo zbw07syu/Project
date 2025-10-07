@@ -18,11 +18,17 @@
   const restartBtn = document.getElementById('restartBtn');
   const rulesBtn = document.getElementById('rulesBtn');
   const teamCountModal = document.getElementById('teamCountModal');
+  const humanTeamsModal = document.getElementById('humanTeamsModal');
+  const humanTeamOptions = document.getElementById('humanTeamOptions');
+  const teamSelectModal = document.getElementById('teamSelectModal');
+  const teamSelectMsg = document.getElementById('teamSelectMsg');
+  const teamOptions = document.getElementById('teamOptions');
+  const teamConfirmBtn = document.getElementById('teamConfirmBtn');
   const rulesPanel = document.getElementById('rulesPanel');
   const closeRules = document.getElementById('closeRules');
 
   // Game State
-  let teams = []; // [{ name, color, score, roll }]
+  let teams = []; // [{ name, color, score, roll, isAI }]
   let gridSize = 5; // 5x5 for 2 teams, 6x6 for 3, 7x7 for 4
   let grid = []; // 2D array of tiles
   let snakeHead = null; // {row, col}
@@ -37,6 +43,12 @@
   let isMuted = false;
   let payload = null; // Question list
   let usedQuestions = new Set();
+  
+  // AI State
+  let numTeams = 2;
+  let numHumanTeams = 0;
+  let humanTeams = new Set(); // Set of team indices that are human-controlled
+  let aiActionInProgress = false;
 
   // Team colors
   const teamColors = ['red', 'blue', 'green', 'yellow'];
@@ -74,10 +86,9 @@
     // Team count selection
     document.querySelectorAll('.teamCountBtn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const numTeams = parseInt(btn.dataset.teams);
-        initTeams(numTeams);
+        numTeams = parseInt(btn.dataset.teams);
         hideModal(teamCountModal);
-        startGame();
+        showHumanTeamsModal();
       });
     });
 
@@ -88,18 +99,98 @@
     closeRules.addEventListener('click', () => hideModal(rulesPanel));
   }
 
+  function showHumanTeamsModal() {
+    humanTeamOptions.innerHTML = '';
+    // 0..numTeams options (0 = all AI)
+    for (let i = 0; i <= numTeams; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'vpBtn';
+      btn.dataset.count = String(i);
+      btn.textContent = String(i);
+      btn.addEventListener('click', () => {
+        numHumanTeams = i;
+        humanTeams.clear();
+        hideModal(humanTeamsModal);
+        if (numHumanTeams === 0) {
+          // All AI - skip team selection
+          initTeams(numTeams);
+          startGame();
+        } else if (numHumanTeams === numTeams) {
+          // All human - skip team selection
+          initTeams(numTeams);
+          startGame();
+        } else {
+          // Mixed - show team selection
+          showTeamSelectModal();
+        }
+      });
+      humanTeamOptions.appendChild(btn);
+    }
+    showModal(humanTeamsModal);
+  }
+
+  function showTeamSelectModal() {
+    teamOptions.innerHTML = '';
+    teamConfirmBtn.disabled = true;
+
+    teamSelectMsg.textContent = `Select ${numHumanTeams} team(s) to be human-controlled`;
+
+    for (let i = 0; i < numTeams; i++) {
+      const row = document.createElement('label');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+      
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = i;
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          humanTeams.add(i);
+        } else {
+          humanTeams.delete(i);
+        }
+        teamConfirmBtn.disabled = humanTeams.size !== numHumanTeams;
+      });
+      
+      const span = document.createElement('span');
+      span.textContent = teamNames[i];
+      row.appendChild(cb);
+      row.appendChild(span);
+      teamOptions.appendChild(row);
+    }
+
+    teamConfirmBtn.onclick = () => {
+      if (humanTeams.size !== numHumanTeams) return;
+      hideModal(teamSelectModal);
+      initTeams(numTeams);
+      startGame();
+    };
+
+    showModal(teamSelectModal);
+  }
+
   function initTeams(numTeams) {
     teams = [];
     gridSize = numTeams === 2 ? 5 : numTeams === 3 ? 6 : 7;
     
     for (let i = 0; i < numTeams; i++) {
+      const isAI = numHumanTeams === 0 ? true : 
+                   numHumanTeams === numTeams ? false : 
+                   !humanTeams.has(i);
+      
       teams.push({
         name: teamNames[i],
         color: teamColors[i],
         score: 0,
-        roll: 0
+        roll: 0,
+        isAI: isAI
       });
     }
+  }
+
+  function isTeamAI(team) {
+    return team && team.isAI === true;
   }
 
   function startGame() {
@@ -894,9 +985,9 @@
     }
   }
 
-  function handleTileClick(row, col) {
+  function handleTileClick(row, col, isAIAction = false) {
     if (!gameActive) return;
-    if (!tilesEnabled) return; // Don't allow clicks until dice is rolled
+    if (!tilesEnabled && !isAIAction) return; // Don't allow clicks until dice is rolled (unless AI)
     if (grid[row][col].revealed) return;
     
     // Reveal tile
@@ -965,12 +1056,19 @@
     setMessage2('');
     setMessage3('');
     
-    // Create roll dice button
-    const rollBtn = document.createElement('button');
-    rollBtn.id = 'rollDiceBtn';
-    rollBtn.textContent = 'Roll Dice';
-    rollBtn.addEventListener('click', rollDiceForTurnOrder);
-    message3El.appendChild(rollBtn);
+    // If all teams are AI, auto-roll after a delay
+    if (numHumanTeams === 0) {
+      setTimeout(() => {
+        rollDiceForTurnOrder();
+      }, 1500);
+    } else {
+      // Create roll dice button for human players
+      const rollBtn = document.createElement('button');
+      rollBtn.id = 'rollDiceBtn';
+      rollBtn.textContent = 'Roll Dice';
+      rollBtn.addEventListener('click', rollDiceForTurnOrder);
+      message3El.appendChild(rollBtn);
+    }
   }
 
   function rollDiceForTurnOrder() {
@@ -1011,6 +1109,17 @@
       // No questions available, skip to first player's turn
       setMessage1(`${team.name} would answer a question, but none are loaded.`);
       setTimeout(() => startPlayerTurn(), 2000);
+      return;
+    }
+    
+    // Check if team is AI
+    if (isTeamAI(team)) {
+      // AI answers automatically
+      setMessage1(`${team.name} is answering the question...`);
+      setTimeout(() => {
+        setMessage1(`${team.name} has answered.`);
+        setTimeout(() => startPlayerTurn(), 1000);
+      }, 1500);
       return;
     }
     
@@ -1129,12 +1238,49 @@
   }
 
   function startPlayerTurn() {
-    setTilesEnabled(true); // Enable tiles for player to click
     const currentTeam = teams[turnOrder[currentTurnIndex]];
-    setMessage1(`${currentTeam.name}'s turn!`);
-    setMessage2('Click a tile to reveal it.');
-    setMessage3('');
-    updateScoreboard();
+    
+    // Check if current team is AI
+    if (isTeamAI(currentTeam)) {
+      setTilesEnabled(false);
+      setMessage1(`${currentTeam.name}'s turn!`);
+      setMessage2('AI is selecting a tile...');
+      setMessage3('');
+      updateScoreboard();
+      
+      // AI selects a random unrevealed tile after a delay
+      setTimeout(() => {
+        aiSelectTile();
+      }, 1500);
+    } else {
+      setTilesEnabled(true); // Enable tiles for player to click
+      setMessage1(`${currentTeam.name}'s turn!`);
+      setMessage2('Click a tile to reveal it.');
+      setMessage3('');
+      updateScoreboard();
+    }
+  }
+
+  function aiSelectTile() {
+    // Find all unrevealed tiles
+    const unrevealedTiles = [];
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        if (!grid[row][col].revealed) {
+          unrevealedTiles.push({ row, col });
+        }
+      }
+    }
+    
+    if (unrevealedTiles.length === 0) {
+      // No tiles left (shouldn't happen)
+      nextTurn();
+      return;
+    }
+    
+    // Select a random tile
+    const randomTile = unrevealedTiles[Math.floor(Math.random() * unrevealedTiles.length)];
+    handleTileClick(randomTile.row, randomTile.col, true); // Pass true to indicate AI action
   }
 
   function nextTurn() {
@@ -1215,7 +1361,8 @@
       const team = teams[teamIndex];
       const li = document.createElement('li');
       li.className = `team-${team.color}`;
-      li.textContent = `${team.name}: ${team.score}`;
+      const aiLabel = team.isAI ? ' (AI)' : '';
+      li.textContent = `${team.name}${aiLabel}: ${team.score}`;
       
       // Highlight current turn
       if (gameActive && orderIndex === currentTurnIndex) {
@@ -1230,7 +1377,8 @@
       teams.forEach(team => {
         const li = document.createElement('li');
         li.className = `team-${team.color}`;
-        li.textContent = `${team.name}: ${team.score}`;
+        const aiLabel = team.isAI ? ' (AI)' : '';
+        li.textContent = `${team.name}${aiLabel}: ${team.score}`;
         scoresEl.appendChild(li);
       });
     }

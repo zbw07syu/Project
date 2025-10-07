@@ -128,10 +128,11 @@
 
   function parsePayloadFromHash() {
     try {
-      const hash = decodeURIComponent(location.hash || '');
+      const hash = location.hash || '';
       const m = hash.match(/#questions=(.*)$/);
       if (m && m[1]) {
-        const obj = JSON.parse(m[1]);
+        const decoded = decodeURIComponent(m[1]);
+        const obj = JSON.parse(decoded);
         if (obj && Array.isArray(obj.questions)) {
           payload = {
             id: obj.id || null,

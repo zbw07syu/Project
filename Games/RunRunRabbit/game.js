@@ -2397,11 +2397,119 @@ function startTurn() {
   }
 }
 
+// ----- Dice Roll for Questions (3+ player games) -----
+let diceRollsForQuestions = {}; // Store dice rolls: {playerName: rollValue}
+let diceRollResolved = false;
+let diceRollIndex = 0; // Track which player is rolling
 
-// ----- Start PSS round -----
+function startDiceRollForQuestions() {
+  if (questionDiv.dataset && questionDiv.dataset.victory === 'true') return;
+  
+  diceRollsForQuestions = {};
+  diceRollResolved = false;
+  diceRollIndex = 0;
+  
+  // Hide PSS panel, show dice controls
+  pssPanel.style.display = "none";
+  controlsDiv.innerHTML = "";
+  
+  // Get active players (exclude classic 'rabbit' in 3p/4p)
+  const activePlayers = players.filter(p => p.name !== 'rabbit');
+  
+  const namesMap = getNamesMap();
+  questionDiv.textContent = "Roll dice to see who answers the question!";
+  answerDiv.textContent = "Click 'Roll Dice' to begin";
+  
+  // Create a "Roll Dice" button
+  const rollBtn = document.createElement("button");
+  rollBtn.textContent = "Roll Dice";
+  rollBtn.classList.add("controlsBtn");
+  controlsDiv.appendChild(rollBtn);
+  
+  rollBtn.addEventListener("click", () => {
+    rollBtn.disabled = true;
+    performAllDiceRolls();
+  });
+  
+  // If all players are AI, auto-roll
+  const allAI = activePlayers.every(p => isPlayerAI(p));
+  if (allAI) {
+    setTimeout(() => {
+      rollBtn.click();
+    }, 500);
+  }
+}
+
+function performAllDiceRolls() {
+  const activePlayers = players.filter(p => p.name !== 'rabbit');
+  const namesMap = getNamesMap();
+  
+  // Roll dice for all players
+  activePlayers.forEach(p => {
+    diceRollsForQuestions[p.name] = Math.floor(Math.random() * 6) + 1;
+  });
+  
+  // Play dice sound
+  try { diceRollSound.currentTime = 0; diceRollSound.play(); } catch {}
+  
+  // Display results
+  const resultsText = activePlayers
+    .map(p => `${namesMap[p.name] || p.name}: ${diceRollsForQuestions[p.name]}`)
+    .join(" | ");
+  
+  questionDiv.textContent = resultsText;
+  
+  // Find the lowest roll(s)
+  const rolls = Object.values(diceRollsForQuestions);
+  const minRoll = Math.min(...rolls);
+  losers = Object.entries(diceRollsForQuestions)
+    .filter(([name, roll]) => roll === minRoll)
+    .map(([name, roll]) => name);
+  
+  const loserNames = losers.map(name => namesMap[name] || name).join(", ");
+  
+  if (losers.length === activePlayers.length) {
+    // Everyone rolled the same - tie, roll again
+    answerDiv.textContent = `Everyone rolled ${minRoll}! Rolling again...`;
+    setTimeout(() => {
+      startDiceRollForQuestions();
+    }, 2000);
+  } else {
+    answerDiv.textContent = `${loserNames} rolled lowest (${minRoll}) and must answer!`;
+    
+    // Show "Show Question" button
+    controlsDiv.innerHTML = "";
+    const showBtn = document.createElement("button");
+    showBtn.textContent = "Show Question";
+    showBtn.classList.add("controlsBtn");
+    controlsDiv.appendChild(showBtn);
+    
+    currentLoserIndex = 0;
+    diceRollResolved = true;
+    
+    showBtn.addEventListener("click", () => {
+      controlsDiv.innerHTML = "";
+      answerShown = false;
+      askNextLoserQuestion();
+    });
+    
+    // Auto-advance if the first loser is AI
+    maybeAutoAdvanceQAForAI();
+  }
+}
+
+// ----- Start PSS round (or dice roll for 3+) -----
 function startPSSRound() {
   // If victory was declared, do nothing and keep UI clean
   if (questionDiv.dataset && questionDiv.dataset.victory === 'true') return;
+  
+  // For 3+ player games, use dice roll instead of PSS
+  if (numTeams >= 3) {
+    startDiceRollForQuestions();
+    return;
+  }
+  
+  // 2-player game: use PSS as normal
   // Move PSS into controls area; hide dice
   controlsDiv.innerHTML = "";
   controlsDiv.appendChild(pssPanel);
@@ -2410,16 +2518,15 @@ function startPSSRound() {
   rollDiceBtn.disabled = true;
   pssResolved = false;
 
-  // Build PSS order from current active players (exclude classic 'rabbit' in 3p/4p)
-  if (numTeams === 2) {
-    pssOrder = players.map(p => p.name);
-  } else {
-    pssOrder = players.map(p => p.name).filter(name => name !== 'rabbit');
-  }
+  // Build PSS order from current active players
+  pssOrder = players.map(p => p.name);
 
   const namesMap = getNamesMap();
   const label = namesMap[pssHuman] || pssHuman;
-  answerDiv.textContent = `${label}, play paper-scissors-stone!`;
+  // Only show PSS instruction for 2-player games
+  if (numTeams === 2) {
+    answerDiv.textContent = `${label}, play paper-scissors-stone!`;
+  }
   highlightCurrentPlayer(pssHuman);
 
   // Toggle PSS buttons: enabled if human's turn, disabled if AI's turn
@@ -3004,7 +3111,10 @@ function endPSSRound() {
   pssHuman = pssOrder[pssIndex];
 
   const namesMap = getNamesMap();
-  answerDiv.textContent = `${namesMap[pssHuman] || pssHuman}, play paper-scissors-stone!`;
+  // Only show PSS instruction for 2-player games
+  if (numTeams === 2) {
+    answerDiv.textContent = `${namesMap[pssHuman] || pssHuman}, play paper-scissors-stone!`;
+  }
   updateScoreboard(diceQueue);
   highlightCurrentPlayer(pssHuman);
 
@@ -3406,7 +3516,10 @@ initPSSOrder();
 
       // Start first PSS round and let AI auto-play if needed
       startPSSRound();
-      answerDiv.textContent = `${getNamesMap()[pssHuman] || pssHuman}, play paper-scissors-stone!`;
+      // Only show PSS instruction for 2-player games
+      if (numTeams === 2) {
+        answerDiv.textContent = `${getNamesMap()[pssHuman] || pssHuman}, play paper-scissors-stone!`;
+      }
       maybeAutoPlayPSS();
     });
   });
