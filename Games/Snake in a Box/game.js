@@ -101,8 +101,8 @@
 
   function showHumanTeamsModal() {
     humanTeamOptions.innerHTML = '';
-    // 0..numTeams options (0 = all AI)
-    for (let i = 0; i <= numTeams; i++) {
+    // 1..numTeams options (at least 1 human team required)
+    for (let i = 1; i <= numTeams; i++) {
       const btn = document.createElement('button');
       btn.className = 'vpBtn';
       btn.dataset.count = String(i);
@@ -111,11 +111,7 @@
         numHumanTeams = i;
         humanTeams.clear();
         hideModal(humanTeamsModal);
-        if (numHumanTeams === 0) {
-          // All AI - skip team selection
-          initTeams(numTeams);
-          startGame();
-        } else if (numHumanTeams === numTeams) {
+        if (numHumanTeams === numTeams) {
           // All human - skip team selection
           initTeams(numTeams);
           startGame();
