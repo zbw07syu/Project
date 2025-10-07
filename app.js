@@ -1118,10 +1118,13 @@
       const payload = {
         id: list.id,
         name: list.name || 'Untitled',
-        questions: list.questions.map(q => q.type === 'single'
-          ? { type: 'single', text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [] }
-          : { type: 'multi', text: q.text || '', options: (q.options || []).slice(0,4), correct: (q.correct || []).slice(0,4) }
-        )
+        questions: list.questions.map(q => {
+          const base = q.type === 'single'
+            ? { type: 'single', text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [] }
+            : { type: 'multi', text: q.text || '', options: (q.options || []).slice(0,4), correct: (q.correct || []).slice(0,4) };
+          if (q.image) base.image = q.image;
+          return base;
+        })
       };
       const data = encodeURIComponent(JSON.stringify(payload));
       closeGameSelectModal();
@@ -1130,6 +1133,8 @@
         window.open(`./Games/RunRunRabbit/index.html#questions=${data}`, '_blank');
       } else if (choice === 'tornado') {
         window.open(`./Games/Tornado/index.html#questions=${data}`, '_blank');
+      } else if (choice === 'snakeinabox') {
+        window.open(`./Games/Snake in a Box/index.html#questions=${data}`, '_blank');
       } else if (choice === 'icebreak') {
         window.open(`./Games/Icebreak/index.html#questions=${data}`, '_blank');
       }
