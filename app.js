@@ -1325,6 +1325,11 @@
               // For icebreak questions
               existingQ.prompt = generatedQ.prompt || existingQ.prompt || '';
               existingQ.accepted = Array.isArray(generatedQ.accepted) ? generatedQ.accepted : (existingQ.accepted || []);
+            } else if (state.draft.listType === 'vocab') {
+              // For vocab items
+              existingQ.word = generatedQ.word || existingQ.word || '';
+              existingQ.definition = generatedQ.definition || existingQ.definition || '';
+              existingQ.image = generatedQ.imageUrl || existingQ.image || '';
             } else {
               // For regular questions - respect the original question type
               existingQ.text = generatedQ.question || existingQ.text || '';
@@ -1349,7 +1354,8 @@
         });
 
         renderQuestionsEditor();
-        toast(`Generated ${data.questions.length} questions using AI!`);
+        const itemType = state.draft.listType === 'vocab' ? 'vocab items' : 'questions';
+        toast(`Generated ${data.questions.length} ${itemType} using AI!`);
 
       } catch (error) {
         console.error('Error generating questions:', error);

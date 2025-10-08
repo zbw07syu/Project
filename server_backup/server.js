@@ -45,9 +45,9 @@ app.post('/generate', async (req, res) => {
       });
     }
 
-    if (!['regular', 'icebreak'].includes(type)) {
+    if (!['regular', 'icebreak', 'vocab'].includes(type)) {
       return res.status(400).json({ 
-        error: 'Invalid type. Must be either "regular" or "icebreak"' 
+        error: 'Invalid type. Must be either "regular", "icebreak", or "vocab"' 
       });
     }
 
@@ -129,6 +129,37 @@ Example format:
     ]
   }
 ]`;
+    } else {
+      // Vocab type
+      systemPrompt = `You are an expert vocabulary educator. Generate vocabulary words with definitions and find appropriate images from Unsplash.
+
+Return ONLY a valid JSON array of vocabulary objects. Each object should have:
+- word: the vocabulary word
+- definition: a clear, concise definition (1-2 sentences)
+- imageUrl: a direct Unsplash image URL that visually represents the word (use format: https://source.unsplash.com/800x600/?[keyword])
+
+IMPORTANT: 
+- Choose words appropriate for the theme
+- Definitions should be educational and easy to understand
+- Image URLs should use relevant keywords that match the word
+- Use the Unsplash Source API format: https://source.unsplash.com/800x600/?[keyword]
+- Replace [keyword] with a relevant search term (e.g., for "ocean" use https://source.unsplash.com/800x600/?ocean)`;
+
+      userPrompt = `Generate ${numQuestions} vocabulary words about "${theme}". Return only the JSON array, no other text.
+
+Example format:
+[
+  {
+    "word": "Ocean",
+    "definition": "A very large expanse of sea, in particular each of the main areas into which the sea is divided geographically.",
+    "imageUrl": "https://source.unsplash.com/800x600/?ocean,sea"
+  },
+  {
+    "word": "Mountain",
+    "definition": "A large natural elevation of the earth's surface rising abruptly from the surrounding level.",
+    "imageUrl": "https://source.unsplash.com/800x600/?mountain,peak"
+  }
+]`;
     }
 
 
@@ -182,13 +213,22 @@ Example format:
             answer: q.answer || 'Answer not provided'
           };
         }
-      } else {
+      } else if (type === 'icebreak') {
         // Icebreak type
         return {
           id,
           type: 'icebreak',
           prompt: q.prompt || `Icebreaker ${index + 1}`,
           accepted: Array.isArray(q.acceptedQuestions) ? q.acceptedQuestions : []
+        };
+      } else {
+        // Vocab type
+        return {
+          id,
+          type: 'vocab',
+          word: q.word || `Word ${index + 1}`,
+          definition: q.definition || '',
+          imageUrl: q.imageUrl || ''
         };
       }
     });
