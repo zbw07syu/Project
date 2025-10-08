@@ -35,8 +35,11 @@ app.get('/health', (req, res) => {
 
 // Generate questions endpoint
 app.post('/generate', async (req, res) => {
+  console.log('=== Generate endpoint called ===');
+  console.log('Request body:', req.body);
   try {
     const { theme, type, numQuestions, singleCount, multiCount } = req.body;
+    console.log('Parsed params:', { theme, type, numQuestions, singleCount, multiCount });
 
     // Validate input
     if (!theme || !type || !numQuestions) {
@@ -58,6 +61,7 @@ app.post('/generate', async (req, res) => {
     }
 
     let systemPrompt, userPrompt;
+    console.log('Building prompts for type:', type);
 
     if (type === 'regular') {
       systemPrompt = `You are an expert question generator for educational content. Generate engaging questions for classroom use. 
@@ -99,7 +103,7 @@ Example format:
     "options": ["Red", "Green", "Orange", "Purple"]
   }
 ]`;
-    } else {
+    } else if (type === 'icebreak') {
       // Icebreak type
       systemPrompt = `You are an expert at creating icebreaker questions for classroom activities. Generate fun, engaging prompts that help students get to know each other.
 
@@ -162,7 +166,7 @@ Example format:
 ]`;
     }
 
-
+    console.log('Calling OpenAI API...');
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -258,6 +262,15 @@ Example format:
       error: 'Failed to generate questions. Please try again.' 
     });
   }
+});
+
+// Error handlers for uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Start server

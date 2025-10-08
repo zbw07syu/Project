@@ -1201,18 +1201,40 @@
       if (!state.play.listId) return;
       const list = state.lists.find(l => l.id === state.play.listId);
       if (!list) return;
-      // Build a compact transferable format
-      const payload = {
-        id: list.id,
-        name: list.name || 'Untitled',
-        questions: list.questions.map(q => {
-          const base = q.type === 'single'
-            ? { type: 'single', text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [] }
-            : { type: 'multi', text: q.text || '', options: (q.options || []).slice(0,4), correct: (q.correct || []).slice(0,4) };
-          if (q.image) base.image = q.image;
-          return base;
-        })
-      };
+      
+      // Build payload based on list type
+      let payload;
+      if (list.listType === 'vocab') {
+        // Vocab list payload
+        payload = {
+          id: list.id,
+          name: list.name || 'Untitled',
+          listType: 'vocab',
+          questions: list.questions.map(q => ({
+            type: 'vocab',
+            word: q.word || '',
+            image: q.image || '',
+            definition: q.definition || ''
+          }))
+        };
+      } else {
+        // Regular/Icebreak list payload
+        payload = {
+          id: list.id,
+          name: list.name || 'Untitled',
+          listType: list.listType || 'regular',
+          questions: list.questions.map(q => {
+            const base = q.type === 'single'
+              ? { type: 'single', text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [] }
+              : q.type === 'icebreak'
+              ? { type: 'icebreak', prompt: q.prompt || '', accepted: Array.isArray(q.accepted) ? q.accepted : [] }
+              : { type: 'multi', text: q.text || '', options: (q.options || []).slice(0,4), correct: (q.correct || []).slice(0,4) };
+            if (q.image) base.image = q.image;
+            return base;
+          })
+        };
+      }
+      
       const data = encodeURIComponent(JSON.stringify(payload));
       closeGameSelectModal();
       if (choice === 'runrunrabbit') {
@@ -1226,6 +1248,8 @@
         window.open(`./Games/2 Truths and a Lie/index.html#questions=${data}`, '_blank');
       } else if (choice === 'icebreak') {
         window.open(`./Games/Icebreak/index.html#questions=${data}`, '_blank');
+      } else if (choice === 'memorymadness') {
+        window.open(`./Games/Pelmansim/index.html#questions=${data}`, '_blank');
       }
     });
 
@@ -1408,6 +1432,7 @@
     const modal = $('#gameSelectModal');
     const list = state.lists.find((l) => l.id === listId);
     const icebreakOption = $('#icebreakGameOption');
+    const memoryMadnessOption = $('#memoryMadnessGameOption');
     
     // Hide Icebreak option for regular questionlists (since they're not compatible)
     if (icebreakOption) {
@@ -1415,10 +1440,26 @@
       icebreakOption.style.display = shouldHide ? 'none' : 'flex';
     }
     
+    // Hide Memory Madness option for non-vocab lists (since it requires vocab data)
+    if (memoryMadnessOption) {
+      const shouldHide = !list || list.listType !== 'vocab';
+      memoryMadnessOption.style.display = shouldHide ? 'none' : 'flex';
+    }
+    
     // Ensure a valid option is selected if Icebreak was previously selected but is now hidden
     const icebreakRadio = document.querySelector('input[name="gameChoice"][value="icebreak"]');
     if (icebreakRadio && icebreakRadio.checked && icebreakOption && icebreakOption.style.display === 'none') {
       // Select RunRunRabbit as default when Icebreak is hidden
+      const runrunrabbitRadio = document.querySelector('input[name="gameChoice"][value="runrunrabbit"]');
+      if (runrunrabbitRadio) {
+        runrunrabbitRadio.checked = true;
+      }
+    }
+    
+    // Ensure a valid option is selected if Memory Madness was previously selected but is now hidden
+    const memoryMadnessRadio = document.querySelector('input[name="gameChoice"][value="memorymadness"]');
+    if (memoryMadnessRadio && memoryMadnessRadio.checked && memoryMadnessOption && memoryMadnessOption.style.display === 'none') {
+      // Select RunRunRabbit as default when Memory Madness is hidden
       const runrunrabbitRadio = document.querySelector('input[name="gameChoice"][value="runrunrabbit"]');
       if (runrunrabbitRadio) {
         runrunrabbitRadio.checked = true;
