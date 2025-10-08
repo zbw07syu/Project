@@ -1135,6 +1135,8 @@
         window.open(`./Games/Tornado/index.html#questions=${data}`, '_blank');
       } else if (choice === 'snakeinabox') {
         window.open(`./Games/Snake in a Box/index.html#questions=${data}`, '_blank');
+      } else if (choice === '2truthsandalie') {
+        window.open(`./Games/2 Truths and a Lie/index.html#questions=${data}`, '_blank');
       } else if (choice === 'icebreak') {
         window.open(`./Games/Icebreak/index.html#questions=${data}`, '_blank');
       }

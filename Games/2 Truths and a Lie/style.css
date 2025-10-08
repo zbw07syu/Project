@@ -1,0 +1,417 @@
+/* 2 Truths and a Lie styles - match shared layout (Bangers font) */
+:root { 
+  --bg: #2a1a3a; 
+  --panel: rgba(255,255,255,0.9); 
+  --text: #1a0a2a; 
+  --accent: #ff6b9d; 
+  --highlight: #ffd54a;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  margin: 0;
+  font-family: 'Bangers', cursive;
+  background: linear-gradient(135deg, #2a1a3a 0%, #4a2a5a 100%);
+  color: #fff;
+}
+
+h1 { 
+  text-align: center; 
+  margin: 12px 0; 
+  text-shadow: 3px 3px #000; 
+}
+
+#gameTitle { 
+  font-size: 64px; 
+  margin: 16px 0 8px; 
+}
+
+#gameContainer { 
+  display: grid; 
+  grid-template-columns: 220px 1fr 280px; 
+  gap: 12px; 
+  padding: 12px; 
+  height: calc(100vh - 120px);
+}
+
+/* Left Panel */
+#leftPanel { 
+  background: rgba(0,0,0,0.35); 
+  padding: 10px; 
+  border-radius: 10px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  align-items: center; 
+}
+
+#leftPanel button {
+  width: 100%;
+  min-height: 60px;
+  padding: 12px;
+  font-family: 'Bangers', cursive;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid #222;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+#leftPanel button:hover {
+  transform: scale(1.05);
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
+}
+
+/* Center Panel */
+#centerPanel { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  overflow-y: auto;
+}
+
+#sentenceBoxes {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.sentenceContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0,0,0,0.35);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.sentenceLabel {
+  font-size: 36px;
+  text-align: center;
+  color: var(--highlight);
+  text-shadow: 2px 2px #000;
+  font-weight: bold;
+}
+
+.sentenceInput {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  font-family: 'Bangers', cursive;
+  font-size: 20px;
+  border: 3px solid #222;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  resize: vertical;
+}
+
+.sentenceInput:disabled {
+  background: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.guessInput {
+  width: 100%;
+  padding: 10px;
+  font-family: 'Bangers', cursive;
+  font-size: 22px;
+  border: 3px solid #222;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  text-align: center;
+}
+
+.guessInput:disabled {
+  background: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.guessInput:not(:disabled) {
+  background: #ffffcc;
+}
+
+/* Message Area */
+#messageArea {
+  background: rgba(0,0,0,0.35);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.messageBox {
+  background: var(--panel);
+  color: var(--text);
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 50px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#controlsDiv button {
+  font-family: 'Bangers', cursive;
+  font-size: 28px;
+  padding: 12px 24px;
+  border: 3px solid #222;
+  border-radius: 8px;
+  background: var(--highlight);
+  color: #000;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  font-weight: bold;
+}
+
+#controlsDiv button:hover {
+  transform: scale(1.05);
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.3);
+}
+
+#controlsDiv button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Right Panel - Scoreboard */
+#scorePanel { 
+  background: rgba(0,0,0,0.35); 
+  padding: 12px; 
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#scorePanel h2 {
+  text-align: center;
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  text-shadow: 2px 2px #000;
+}
+
+#scores { 
+  list-style: none; 
+  padding: 0; 
+  margin: 0; 
+  flex: 1;
+  overflow-y: auto;
+}
+
+#scores li { 
+  background: var(--panel); 
+  color: var(--text); 
+  padding: 10px; 
+  margin-bottom: 8px; 
+  border-radius: 8px; 
+  font-size: 24px;
+  text-align: center;
+}
+
+#scores li.current { 
+  outline: 4px solid var(--accent); 
+  background: var(--highlight); 
+  color: #000; 
+  font-weight: bold;
+  transform: scale(1.05);
+}
+
+#scores li.winner { 
+  outline: 4px solid #ffd700; 
+  background: #fffad1; 
+  color: #000; 
+  font-weight: bold; 
+}
+
+#turnCounter {
+  background: rgba(255,255,255,0.15);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+#turnCounter h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  text-shadow: 2px 2px #000;
+}
+
+#turnsLeft {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--highlight);
+  text-shadow: 2px 2px #000;
+}
+
+/* Modals */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal.answer-modal {
+  background: rgba(0,0,0,0.5);
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #4a2a5a 0%, #6a3a7a 100%);
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border: 3px solid var(--accent);
+  max-width: 600px;
+  width: 90%;
+}
+
+.modalContent h2 {
+  margin: 0 0 20px 0;
+  font-size: 42px;
+  color: #fff;
+  text-shadow: 3px 3px #000;
+}
+
+.modalContent p {
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.vpBtn {
+  font-family: 'Bangers', cursive;
+  font-size: 32px;
+  padding: 15px 30px;
+  border: 3px solid #222;
+  border-radius: 10px;
+  background: var(--highlight);
+  color: #000;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  font-weight: bold;
+  min-width: 80px;
+}
+
+.vpBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.vpBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Rules Panel */
+.rules {
+  max-width: 700px;
+  text-align: left;
+}
+
+.rules h2 {
+  text-align: center;
+}
+
+.rules ol {
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.6;
+  padding-left: 25px;
+}
+
+.rules li {
+  margin-bottom: 12px;
+}
+
+.rules button {
+  font-family: 'Bangers', cursive;
+  font-size: 28px;
+  padding: 12px 30px;
+  border: 3px solid #222;
+  border-radius: 10px;
+  background: var(--highlight);
+  color: #000;
+  cursor: pointer;
+  margin-top: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rules button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Canvas and Overlay */
+#confettiCanvas, #strobeOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Victory active state - hide scrollbars */
+html.victory-active,
+body.victory-active {
+  overflow: hidden !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.5);
+}

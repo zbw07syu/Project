@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2 Truths and a Lie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Font: Bangers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&display=swap">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="gameTitle">2 Truths and a Lie</h1>
+
+  <div id="gameContainer">
+    <!-- Left Panel -->
+    <div id="leftPanel">
+      <button id="muteBtn">Mute/Unmute Music</button>
+      <button id="restartBtn">Restart</button>
+      <button id="endGameBtn">End Game</button>
+      <button id="rulesBtn">Rules</button>
+    </div>
+
+    <!-- Center: Game Area -->
+    <div id="centerPanel">
+      <!-- Sentence Input Boxes -->
+      <div id="sentenceBoxes">
+        <div class="sentenceContainer">
+          <label class="sentenceLabel">A</label>
+          <textarea class="sentenceInput" id="sentenceA" placeholder="Write sentence A here..."></textarea>
+          <input type="text" class="guessInput" id="guessA" placeholder="Team guesses (e.g., 1,2,3,t)" disabled>
+        </div>
+        <div class="sentenceContainer">
+          <label class="sentenceLabel">B</label>
+          <textarea class="sentenceInput" id="sentenceB" placeholder="Write sentence B here..."></textarea>
+          <input type="text" class="guessInput" id="guessB" placeholder="Team guesses (e.g., 1,2,3,t)" disabled>
+        </div>
+        <div class="sentenceContainer">
+          <label class="sentenceLabel">C</label>
+          <textarea class="sentenceInput" id="sentenceC" placeholder="Write sentence C here..."></textarea>
+          <input type="text" class="guessInput" id="guessC" placeholder="Team guesses (e.g., 1,2,3,t)" disabled>
+        </div>
+      </div>
+
+      <!-- Game Messages -->
+      <div id="messageArea">
+        <div id="instructionDiv" class="messageBox">Welcome! Set up the game to begin.</div>
+        <div id="answerDiv" class="messageBox"></div>
+        <div id="controlsDiv" class="messageBox"></div>
+      </div>
+    </div>
+
+    <!-- Right: Scoreboard -->
+    <div id="scorePanel">
+      <h2>Scoreboard</h2>
+      <ul id="scores"></ul>
+      <div id="turnCounter">
+        <h3>Turns Remaining</h3>
+        <div id="turnsLeft">-</div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="confettiCanvas" class="hidden" aria-hidden="true"></canvas>
+  <div id="strobeOverlay" class="hidden" aria-hidden="true"></div>
+
+  <!-- Audio -->
+  <audio id="bgMusic" src="timeaftertime.mp3" loop></audio>
+
+  <!-- Setup Modals -->
+  <div id="teamCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of teams</h2>
+      <div class="modalButtons">
+        <button class="vpBtn teamCountBtn" data-teams="2">2</button>
+        <button class="vpBtn teamCountBtn" data-teams="3">3</button>
+        <button class="vpBtn teamCountBtn" data-teams="4">4</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="turnCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of turns</h2>
+      <p style="font-size: 18px; margin-bottom: 15px;">How many students are in the class?</p>
+      <input type="number" id="turnCountInput" min="1" max="100" placeholder="Enter number of turns" style="font-family: 'Bangers', cursive; font-size: 28px; padding: 12px; border: 3px solid #222; border-radius: 8px; text-align: center; width: 100%; margin-bottom: 15px;">
+      <button class="vpBtn" id="turnCountSubmit">Start Game</button>
+    </div>
+  </div>
+
+  <!-- Answer Selection Modal -->
+  <div id="answerModal" class="modal answer-modal">
+    <div class="modalContent">
+      <h2>Which sentence is false?</h2>
+      <div class="modalButtons">
+        <button class="vpBtn answerBtn" data-answer="A">A</button>
+        <button class="vpBtn answerBtn" data-answer="B">B</button>
+        <button class="vpBtn answerBtn" data-answer="C">C</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules -->
+  <div id="rulesPanel" class="modal">
+    <div class="modalContent rules">
+      <h2>How to Play</h2>
+      <ol>
+        <li><strong>Teacher Example Round:</strong> The teacher writes 3 sentences (2 true, 1 false). Teams ask questions and guess which is false.</li>
+        <li><strong>Team Rounds:</strong> Each team takes turns. A student from the current team tells the teacher 3 sentences to write.</li>
+        <li><strong>Guessing:</strong> Other teams and the teacher guess which sentence is false. The teacher's guess is marked with "t" or "T".</li>
+        <li><strong>Scoring:</strong> Teams that guess correctly earn 1 point.</li>
+        <li><strong>Winner:</strong> The team with the most points after all turns wins!</li>
+      </ol>
+      <button id="closeRules">Close</button>
+    </div>
+  </div>
+
+  <script src="../victoryManager.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
