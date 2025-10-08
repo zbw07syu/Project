@@ -103,7 +103,7 @@
 
   const normalizeList = (list) => {
     if (!list) return null;
-    const listType = list.listType === 'icebreak' ? 'icebreak' : 'regular';
+    const listType = list.listType === 'icebreak' ? 'icebreak' : list.listType === 'vocab' ? 'vocab' : 'regular';
     const questions = Array.isArray(list.questions)
       ? list.questions
           .map((q) => {
@@ -122,6 +122,17 @@
                 .filter(Boolean);
               const result = { id, type: 'icebreak', prompt: prompt || '', accepted };
               if (q.image) result.image = q.image;
+              return result;
+            }
+
+            if (listType === 'vocab' || q.type === 'vocab') {
+              const result = {
+                id,
+                type: 'vocab',
+                word: q.word || '',
+                image: q.image || '',
+                definition: q.definition || '',
+              };
               return result;
             }
 
@@ -199,10 +210,12 @@
       li.className = 'list-item';
       const displayName = list.listType === 'icebreak' 
         ? `Icebreak QL: ${escapeHtml(list.name || 'Untitled')}`
+        : list.listType === 'vocab'
+        ? `Vocab List: ${escapeHtml(list.name || 'Untitled')}`
         : escapeHtml(list.name || 'Untitled');
       li.innerHTML = `
         <div class="title">${displayName}</div>
-        <div class="meta">${list.questions.length} question(s)</div>
+        <div class="meta">${list.questions.length} ${list.listType === 'vocab' ? 'word(s)' : 'question(s)'}</div>
         <div class="actions">
           <button data-action="edit" class="secondary">Edit</button>
           <button data-action="delete" class="danger">Delete</button>
@@ -248,6 +261,7 @@
 
   function updateModal1Visibility(type) {
     const isIcebreak = type === 'icebreak';
+    const isVocab = type === 'vocab';
     const totalInput = $('#modalTotalQuestions');
     const totalLabel = totalInput?.closest('label');
     const icebreakSelect = $('#modalIcebreakCount');
@@ -302,6 +316,10 @@
         questions.push({ id: uid(), type: 'icebreak', prompt: '', accepted: ['', '', '', '', '', '', '', ''] });
 
       }
+    } else if (listType === 'vocab') {
+      for (let i = 0; i < total; i++) {
+        questions.push({ id: uid(), type: 'vocab', word: '', image: '', definition: '' });
+      }
     } else {
       for (let i = 0; i < singleCount; i++) {
         questions.push({ id: uid(), type: 'single', text: '', answer: '', alternates: [] });
@@ -338,17 +356,19 @@
     const single = state.draft?.questions.filter((q) => q.type === 'single').length || 0;
     const multi = state.draft?.questions.filter((q) => q.type === 'multi').length || 0;
     const icebreak = state.draft?.questions.filter((q) => q.type === 'icebreak').length || 0;
+    const vocab = state.draft?.questions.filter((q) => q.type === 'vocab').length || 0;
 
     $('#countTotal').textContent = total;
     $('#countSingle').textContent = single;
     $('#countMulti').textContent = multi;
 
-    $('#countListType').textContent = state.draft?.listType === 'icebreak' ? 'Icebreak' : 'Regular';
-    $('#countSingleWrap').hidden = state.draft?.listType === 'icebreak';
-    $('#countMultiWrap').hidden = state.draft?.listType === 'icebreak';
+    const listType = state.draft?.listType;
+    $('#countListType').textContent = listType === 'icebreak' ? 'Icebreak' : listType === 'vocab' ? 'Vocab List' : 'Regular';
+    $('#countSingleWrap').hidden = listType === 'icebreak' || listType === 'vocab';
+    $('#countMultiWrap').hidden = listType === 'icebreak' || listType === 'vocab';
     const icebreakWrap = $('#countIcebreakWrap');
     if (icebreakWrap) {
-      icebreakWrap.hidden = state.draft?.listType !== 'icebreak';
+      icebreakWrap.hidden = listType !== 'icebreak';
       if (icebreakWrap.querySelector('strong')) {
         icebreakWrap.querySelector('strong').textContent = icebreak;
       }
@@ -396,6 +416,34 @@
               <button class="ghost" data-action="add-accepted" data-qid="${q.id}">+ Add accepted question</button>
             </div>
             <div class="accepted-list" data-qid="${q.id}" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
+          </div>
+          <div class="row" style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="ghost" data-action="delete-q" data-qid="${q.id}">Delete</button>
+          </div>
+        `;
+      } else if (q.type === 'vocab') {
+        card.innerHTML = `
+          <div class="row">
+            <label>Word
+              <input type="text" data-kind="word" data-qid="${q.id}" placeholder="Type the word..." />
+            </label>
+          </div>
+          <div class="row">
+            <label>Image (optional - but either image OR definition required)
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" data-kind="image" data-qid="${q.id}" placeholder="e.g., question-images/my-image.gif" style="flex:1;" />
+                <input type="file" data-kind="image-upload" data-qid="${q.id}" accept="image/*" style="display:none;" />
+                <button class="ghost" data-action="upload-image" data-qid="${q.id}" title="Upload image file">📁 Upload</button>
+              </div>
+              <div class="image-preview" data-qid="${q.id}" style="margin-top:8px; display:none;">
+                <img src="" alt="Preview" style="max-width:200px; max-height:150px; border-radius:4px; border:1px solid #ddd;" />
+              </div>
+            </label>
+          </div>
+          <div class="row">
+            <label>Definition (optional - but either image OR definition required)
+              <textarea data-kind="definition" data-qid="${q.id}" rows="3" placeholder="Type the definition..."></textarea>
+            </label>
           </div>
           <div class="row" style="display:flex; justify-content:flex-end; gap:8px;">
             <button class="ghost" data-action="delete-q" data-qid="${q.id}">Delete</button>
@@ -499,6 +547,24 @@
             if (input) input.value = value;
           });
         }
+      } else if (q.type === 'vocab') {
+        const wordInput = card.querySelector('[data-kind="word"]');
+        if (wordInput) wordInput.value = q.word || '';
+        const definitionInput = card.querySelector('[data-kind="definition"]');
+        if (definitionInput) definitionInput.value = q.definition || '';
+        const imageInput = card.querySelector('[data-kind="image"]');
+        if (imageInput) imageInput.value = q.image || '';
+        // Show image preview if image exists
+        if (q.image) {
+          const previewContainer = card.querySelector(`.image-preview[data-qid="${q.id}"]`);
+          if (previewContainer) {
+            const img = previewContainer.querySelector('img');
+            if (img) {
+              img.src = q.image;
+              previewContainer.style.display = 'block';
+            }
+          }
+        }
       } else if (q.type === 'single') {
         const textInput = card.querySelector('[data-kind="text"]');
         if (textInput) textInput.value = q.text || '';
@@ -564,6 +630,12 @@
           const idx = Number(t.getAttribute('data-index'));
           qRef.accepted = Array.isArray(qRef.accepted) ? qRef.accepted : [];
           qRef.accepted[idx] = t.value;
+        }
+        if (kind === 'word') {
+          qRef.word = t.value;
+        }
+        if (kind === 'definition') {
+          qRef.definition = t.value;
         }
         if (kind === 'image') {
           qRef.image = t.value.trim();
@@ -744,6 +816,15 @@
       if (q.type === 'multi') {
         if (!q.options || q.options.length < 2 || q.options.length > 4) {
           toast('Each multiple-choice question must have 2–4 options.');
+          return false;
+        }
+      }
+      // Validate vocab items have either image OR definition
+      if (q.type === 'vocab') {
+        const hasImage = q.image && q.image.trim() !== '';
+        const hasDefinition = q.definition && q.definition.trim() !== '';
+        if (!hasImage && !hasDefinition) {
+          toast('Each vocab item must have either an image OR a definition (or both).');
           return false;
         }
       }
@@ -1045,12 +1126,14 @@
     // Modal 1
     $('#modal1Cancel').addEventListener('click', closeModal1);
     $('#modalListType').addEventListener('change', (e) => {
-      const type = e.target.value === 'icebreak' ? 'icebreak' : 'regular';
+      const value = e.target.value;
+      const type = value === 'icebreak' ? 'icebreak' : value === 'vocab' ? 'vocab' : 'regular';
       updateModal1Visibility(type);
     });
     $('#modal1Next').addEventListener('click', () => {
       const name = $('#modalListName').value.trim();
-      const type = modal1.dataset.listType === 'icebreak' ? 'icebreak' : 'regular';
+      const value = $('#modalListType').value;
+      const type = value === 'icebreak' ? 'icebreak' : value === 'vocab' ? 'vocab' : 'regular';
       let total;
       if (type === 'icebreak') {
         const selected = $('#modalIcebreakCount').value;
@@ -1075,6 +1158,10 @@
       modal1.dataset.name = name;
       if (type === 'icebreak') {
         createDraft({ listName: name, listType: 'icebreak', total, singleCount: 0, multiCount: 0 });
+        return;
+      }
+      if (type === 'vocab') {
+        createDraft({ listName: name, listType: 'vocab', total, singleCount: 0, multiCount: 0 });
         return;
       }
       openModal2(type);
