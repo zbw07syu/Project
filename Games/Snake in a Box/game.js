@@ -1090,14 +1090,22 @@
     setMessage1('Dice Rolls:');
     setMessage2(rollsText);
     
-    // Find team with lowest roll for question
-    const lowestRollTeam = teams.reduce((min, team) => 
-      team.roll < min.roll ? team : min
-    );
+    // Find team with lowest roll for question - only consider human teams
+    const humanTeamsList = teams.filter(team => !isTeamAI(team));
     
-    setTimeout(() => {
-      askQuestion(lowestRollTeam);
-    }, 2000);
+    if (humanTeamsList.length > 0) {
+      // Find human team with lowest roll
+      const lowestRollTeam = humanTeamsList.reduce((min, team) => 
+        team.roll < min.roll ? team : min
+      );
+      
+      setTimeout(() => {
+        askQuestion(lowestRollTeam);
+      }, 2000);
+    } else {
+      // No human teams, skip question phase
+      setTimeout(() => startPlayerTurn(), 2000);
+    }
   }
 
   function askQuestion(team) {
@@ -1105,17 +1113,6 @@
       // No questions available, skip to first player's turn
       setMessage1(`${team.name} would answer a question, but none are loaded.`);
       setTimeout(() => startPlayerTurn(), 2000);
-      return;
-    }
-    
-    // Check if team is AI
-    if (isTeamAI(team)) {
-      // AI answers automatically
-      setMessage1(`${team.name} is answering the question...`);
-      setTimeout(() => {
-        setMessage1(`${team.name} has answered.`);
-        setTimeout(() => startPlayerTurn(), 1000);
-      }, 1500);
       return;
     }
     
