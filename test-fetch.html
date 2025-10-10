@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Fetch to Server</title>
+</head>
+<body>
+    <h1>Test Server Connection</h1>
+    <button id="testBtn">Test Generate Endpoint</button>
+    <pre id="result"></pre>
+
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        theme: 'Test Animals',
+                        type: 'vocab',
+                        numQuestions: 2,
+                        singleCount: 0,
+                        multiCount: 0
+                    })
+                });
+
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'ERROR: ' + error.message + '\n\nThis might be a CORS issue if you\'re opening the HTML file directly (file://). Try serving it with a local server.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -42,6 +42,7 @@
   let gamePhase = 'setup'; // setup, writing, guessing, revealing, nextRound, gameOver
   let victoryTriggered = false;
   let aiCorrectAnswer = null; // Tracks which sentence (A, B, or C) is false when AI submits
+  let isMuted = false; // Track music mute state
 
   // AI fact pool - pre-defined true/false facts about various topics
   const aiFacts = [
@@ -125,6 +126,13 @@
 
     // Control buttons
     volumeSlider.addEventListener('input', handleVolumeChange);
+    
+    // Set initial volume for VictoryManager
+    const initialVolume = volumeSlider.value / 100;
+    if (window.VictoryManager && window.VictoryManager.setMusicVolume) {
+      window.VictoryManager.setMusicVolume(initialVolume);
+    }
+    
     restartBtn.addEventListener('click', restartGame);
     endGameBtn.addEventListener('click', forceEndGame);
     rulesBtn.addEventListener('click', () => showModal(rulesPanel));
@@ -634,6 +642,9 @@
   function handleVolumeChange(e) {
     const volume = e.target.value / 100;
     bgMusic.volume = volume;
+    
+    // Update mute state based on volume
+    isMuted = (volume === 0);
     
     if (window.VictoryManager && window.VictoryManager.setMusicVolume) {
       window.VictoryManager.setMusicVolume(volume);

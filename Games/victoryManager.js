@@ -12,6 +12,7 @@
   let currentMusicTrack = null;
   let lastCombination = null;
   let isMuted = false;
+  let musicVolume = 0.4; // Default volume (0.0 to 1.0)
   let winnerInfo = null; // Stores winner name and color
   
   // Music tracks (relative to the HTML file loading this script)
@@ -208,6 +209,20 @@
     }
   }
 
+  /**
+   * Set the music volume for victory songs
+   * @param {number} volume - Volume level (0.0 to 1.0)
+   */
+  function setMusicVolume(volume) {
+    // Clamp volume between 0 and 1
+    musicVolume = Math.max(0, Math.min(1, volume));
+    
+    // Apply to currently playing track if any
+    if (currentMusicTrack) {
+      currentMusicTrack.volume = musicVolume;
+    }
+  }
+
   // ==================== SELECTION LOGIC ====================
 
   function selectRandomCombination() {
@@ -242,7 +257,7 @@
   function playVictoryMusic(musicPath) {
     try {
       currentMusicTrack = new Audio(musicPath);
-      currentMusicTrack.volume = 0.4;
+      currentMusicTrack.volume = musicVolume; // Use stored volume instead of hardcoded 0.4
       currentMusicTrack.muted = isMuted;
       
       currentMusicTrack.play().catch(err => {
@@ -1129,7 +1144,8 @@
   window.VictoryManager = {
     playVictorySequence,
     stopVictorySequence,
-    updateMuteState
+    updateMuteState,
+    setMusicVolume
   };
 
 })(window);

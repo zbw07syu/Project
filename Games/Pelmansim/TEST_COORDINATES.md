@@ -5,9 +5,14 @@
 The coordinate system flows left-to-right, top-to-bottom across BOTH grids as if they were one continuous grid.
 
 ### Formula
-- `totalCols = cols * 2` (columns per grid × 2 grids)
-- `row = floor(cardIndex / totalCols)`
-- `col = cardIndex % totalCols`
+For **left grid** cards:
+- `row = floor(index / cols)` (where index is position within left grid)
+- `col = index % cols`
+- `coordinate = RowLetter + (col + 1)`
+
+For **right grid** cards:
+- `row = floor(index / cols)` (where index is position within right grid)
+- `col = (index % cols) + cols` (offset by cols to continue numbering)
 - `coordinate = RowLetter + (col + 1)`
 
 ### Example: 12 Cards (6 per side)
@@ -18,17 +23,17 @@ Total columns: 6 (3 × 2)
 - Card 0: row=0, col=0 → **A1**
 - Card 1: row=0, col=1 → **A2**
 - Card 2: row=0, col=2 → **A3**
-- Card 3: row=0, col=3 → **A4**
-- Card 4: row=0, col=4 → **A5**
-- Card 5: row=0, col=5 → **A6**
+- Card 3: row=1, col=0 → **B1**
+- Card 4: row=1, col=1 → **B2**
+- Card 5: row=1, col=2 → **B3**
 
 **Right Grid (Images/Definitions):**
-- Card 6: row=1, col=0 → **B1**
-- Card 7: row=1, col=1 → **B2**
-- Card 8: row=1, col=2 → **B3**
-- Card 9: row=1, col=3 → **B4**
-- Card 10: row=1, col=4 → **B5**
-- Card 11: row=1, col=5 → **B6**
+- Card 0: row=0, col=0+3=3 → **A4**
+- Card 1: row=0, col=1+3=4 → **A5**
+- Card 2: row=0, col=2+3=5 → **A6**
+- Card 3: row=1, col=0+3=3 → **B4**
+- Card 4: row=1, col=1+3=4 → **B5**
+- Card 5: row=1, col=2+3=5 → **B6**
 
 **Visual Layout:**
 ```

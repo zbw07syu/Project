@@ -105,6 +105,7 @@
             <span id="countSingleWrap">Single-answer: <strong id="countSingle">0</strong></span>
             <span id="countMultiWrap">Multiple-choice: <strong id="countMulti">0</strong></span>
             <span id="countIcebreakWrap" hidden>Icebreak prompts: <strong>0</strong></span>
+            <span id="countVocabWrap" hidden>Vocab words: <strong>0</strong></span>
           </div>
         </div>
 
@@ -211,19 +212,19 @@
         <h3>Select a Game</h3>
         <p>Choose a game to play with this question list:</p>
         <div role="group" aria-label="Available games" style="display:flex; flex-direction:column; gap:10px;">
-          <label style="display:flex; align-items:center; gap:8px;">
+          <label id="runrunrabbitGameOption" style="display:flex; align-items:center; gap:8px;">
             <input type="radio" name="gameChoice" value="runrunrabbit" checked />
             <span>RunRunRabbit</span>
           </label>
-          <label style="display:flex; align-items:center; gap:8px;">
+          <label id="tornadoGameOption" style="display:flex; align-items:center; gap:8px;">
             <input type="radio" name="gameChoice" value="tornado" />
             <span>Tornado</span>
           </label>
-          <label style="display:flex; align-items:center; gap:8px;">
+          <label id="snakeinaboxGameOption" style="display:flex; align-items:center; gap:8px;">
             <input type="radio" name="gameChoice" value="snakeinabox" />
             <span>Snake in a Box</span>
           </label>
-          <label style="display:flex; align-items:center; gap:8px;">
+          <label id="truthsandlieGameOption" style="display:flex; align-items:center; gap:8px;">
             <input type="radio" name="gameChoice" value="2truthsandalie" />
             <span>2 Truths and a Lie</span>
           </label>

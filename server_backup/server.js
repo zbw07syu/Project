@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const OpenAI = require('openai');
+const https = require('https');
 
 
 // Load environment variables from .env file if
@@ -27,6 +28,42 @@ const openai = new OpenAI({
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Helper function to fetch image from Pixabay (free, no API key needed)
+async function fetchImageFromPixabay(keyword) {
+  return new Promise((resolve, reject) => {
+    // Use Pixabay's free API (no key required for basic usage)
+    const searchTerm = encodeURIComponent(keyword);
+    const url = `https://pixabay.com/api/?key=9656065-a4094594c34f9ac14c7fc4c39&q=${searchTerm}&image_type=photo&per_page=3`;
+    
+    https.get(url, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (result.hits && result.hits.length > 0) {
+            // Return the medium-sized image URL
+            resolve(result.hits[0].webformatURL);
+          } else {
+            // Fallback to a placeholder if no image found
+            resolve(`https://via.placeholder.com/800x600/4A90E2/ffffff?text=${encodeURIComponent(keyword)}`);
+          }
+        } catch (error) {
+          console.error('Error parsing Pixabay response:', error);
+          resolve(`https://via.placeholder.com/800x600/4A90E2/ffffff?text=${encodeURIComponent(keyword)}`);
+        }
+      });
+    }).on('error', (error) => {
+      console.error('Error fetching from Pixabay:', error);
+      resolve(`https://via.placeholder.com/800x600/4A90E2/ffffff?text=${encodeURIComponent(keyword)}`);
+    });
+  });
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -135,19 +172,17 @@ Example format:
 ]`;
     } else {
       // Vocab type
-      systemPrompt = `You are an expert vocabulary educator. Generate vocabulary words with definitions and find appropriate images from Unsplash.
+      systemPrompt = `You are an expert vocabulary educator. Generate vocabulary words with definitions.
 
 Return ONLY a valid JSON array of vocabulary objects. Each object should have:
 - word: the vocabulary word
 - definition: a clear, concise definition (1-2 sentences)
-- imageUrl: a direct Unsplash image URL that visually represents the word (use format: https://source.unsplash.com/800x600/?[keyword])
+- imageKeyword: a simple keyword for finding an image (e.g., "ocean", "mountain", "book")
 
 IMPORTANT: 
 - Choose words appropriate for the theme
 - Definitions should be educational and easy to understand
-- Image URLs should use relevant keywords that match the word
-- Use the Unsplash Source API format: https://source.unsplash.com/800x600/?[keyword]
-- Replace [keyword] with a relevant search term (e.g., for "ocean" use https://source.unsplash.com/800x600/?ocean)`;
+- Image keywords should be simple, relevant search terms that visually represent the word`;
 
       userPrompt = `Generate ${numQuestions} vocabulary words about "${theme}". Return only the JSON array, no other text.
 
@@ -156,12 +191,12 @@ Example format:
   {
     "word": "Ocean",
     "definition": "A very large expanse of sea, in particular each of the main areas into which the sea is divided geographically.",
-    "imageUrl": "https://source.unsplash.com/800x600/?ocean,sea"
+    "imageKeyword": "ocean"
   },
   {
     "word": "Mountain",
     "definition": "A large natural elevation of the earth's surface rising abruptly from the surrounding level.",
-    "imageUrl": "https://source.unsplash.com/800x600/?mountain,peak"
+    "imageKeyword": "mountain"
   }
 ]`;
     }
@@ -198,7 +233,7 @@ Example format:
     }
 
     // Transform the response to match the editor's expected format
-    const transformedQuestions = questions.map((q, index) => {
+    const transformedQuestions = await Promise.all(questions.map(async (q, index) => {
       const id = Math.random().toString(36).slice(2, 9);
       
       if (type === 'regular') {
@@ -226,16 +261,19 @@ Example format:
           accepted: Array.isArray(q.acceptedQuestions) ? q.acceptedQuestions : []
         };
       } else {
-        // Vocab type
+        // Vocab type - fetch image from Pixabay
+        const imageKeyword = q.imageKeyword || q.word || `Word ${index + 1}`;
+        const imageUrl = await fetchImageFromPixabay(imageKeyword);
+        
         return {
           id,
           type: 'vocab',
           word: q.word || `Word ${index + 1}`,
           definition: q.definition || '',
-          imageUrl: q.imageUrl || ''
+          imageUrl: imageUrl
         };
       }
-    });
+    }));
 
     res.json({
       success: true,

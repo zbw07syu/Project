@@ -373,6 +373,13 @@
         icebreakWrap.querySelector('strong').textContent = icebreak;
       }
     }
+    const vocabWrap = $('#countVocabWrap');
+    if (vocabWrap) {
+      vocabWrap.hidden = listType !== 'vocab';
+      if (vocabWrap.querySelector('strong')) {
+        vocabWrap.querySelector('strong').textContent = vocab;
+      }
+    }
   }
 
   function renderQuestionsEditor() {
@@ -434,6 +441,7 @@
                 <input type="text" data-kind="image" data-qid="${q.id}" placeholder="e.g., question-images/my-image.gif" style="flex:1;" />
                 <input type="file" data-kind="image-upload" data-qid="${q.id}" accept="image/*" style="display:none;" />
                 <button class="ghost" data-action="upload-image" data-qid="${q.id}" title="Upload image file">📁 Upload</button>
+                <button class="ghost" data-action="regenerate-image" data-qid="${q.id}" title="Find a different image for this word">🔄 Find Different Image</button>
               </div>
               <div class="image-preview" data-qid="${q.id}" style="margin-top:8px; display:none;">
                 <img src="" alt="Preview" style="max-width:200px; max-height:150px; border-radius:4px; border:1px solid #ddd;" />
@@ -644,7 +652,9 @@
           if (previewContainer) {
             const img = previewContainer.querySelector('img');
             if (qRef.image) {
-              img.src = qRef.image;
+              // Add cache-busting parameter to force reload if URL hasn't changed
+              const cacheBuster = qRef.image.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
+              img.src = qRef.image + cacheBuster;
               previewContainer.style.display = 'block';
             } else {
               previewContainer.style.display = 'none';
@@ -660,6 +670,9 @@
         const qid = btn.getAttribute('data-qid');
         const qRef = state.draft.questions.find((x) => x.id === qid);
         if (!qRef) return;
+        
+        // Get the current card element (in case card variable is stale)
+        const currentCard = btn.closest('.question-card');
 
         if (action === 'reveal' && qRef.type === 'single') {
           alert(`Answer: ${qRef.answer || '(not set)'}`);
@@ -725,8 +738,71 @@
         }
 
         if (action === 'upload-image') {
-          const fileInput = card.querySelector(`[data-kind="image-upload"][data-qid="${qid}"]`);
+          const fileInput = currentCard.querySelector(`[data-kind="image-upload"][data-qid="${qid}"]`);
           if (fileInput) fileInput.click();
+        }
+
+        if (action === 'regenerate-image' && qRef.type === 'vocab') {
+          // Find a different image for this vocabulary word
+          const word = qRef.word;
+          if (!word || !word.trim()) {
+            toast('Please enter a word first.');
+            return;
+          }
+
+          // Show loading state
+          const originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = '⏳ Finding image...';
+
+          // Call the backend to regenerate the image
+          fetch('http://localhost:3001/regenerate_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: word.trim() })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.imageUrl || data.image) {
+              const newImageUrl = data.imageUrl || data.image;
+              
+              // Update the question with the new image URL
+              qRef.image = newImageUrl;
+              
+              // Update the text input field
+              const imageInput = currentCard.querySelector(`input[data-kind="image"][data-qid="${qid}"]`);
+              if (imageInput) {
+                imageInput.value = newImageUrl;
+                // Manually trigger input event to update preview with cache-busting
+                imageInput.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              
+              // Also directly update the preview with cache-busting to ensure it refreshes
+              const previewContainer = currentCard.querySelector(`.image-preview[data-qid="${qid}"]`);
+              if (previewContainer) {
+                const img = previewContainer.querySelector('img');
+                if (img) {
+                  // Force reload with cache-busting timestamp
+                  const cacheBuster = `?t=${Date.now()}`;
+                  img.src = newImageUrl + cacheBuster;
+                  previewContainer.style.display = 'block';
+                }
+              }
+              
+              toast('✓ New image found!');
+            } else {
+              toast('No alternative image found. Try a different word or upload manually.');
+            }
+          })
+          .catch(err => {
+            console.error('Error regenerating image:', err);
+            toast('Error connecting to server. Make sure the Python server is running.');
+          })
+          .finally(() => {
+            // Restore button state
+            btn.disabled = false;
+            btn.textContent = originalText;
+          });
         }
       });
 
@@ -910,42 +986,115 @@
     const q = list.questions[idx];
     cont.innerHTML = '';
 
-    const qEl = document.createElement('div');
-    qEl.className = 'question';
-    qEl.textContent = q.text || '(no question text)';
+    if (q.type === 'vocab') {
+      // Vocab item display
+      const wordEl = document.createElement('div');
+      wordEl.className = 'question';
+      wordEl.style.fontSize = '2em';
+      wordEl.style.fontWeight = 'bold';
+      wordEl.textContent = q.word || '(no word)';
+      cont.appendChild(wordEl);
 
-    cont.appendChild(qEl);
+      // Show image if available
+      if (q.image) {
+        const imgEl = document.createElement('img');
+        imgEl.src = q.image;
+        imgEl.alt = q.word || 'Vocab image';
+        imgEl.style.maxWidth = '400px';
+        imgEl.style.maxHeight = '300px';
+        imgEl.style.borderRadius = '8px';
+        imgEl.style.margin = '20px 0';
+        imgEl.style.border = '2px solid #ddd';
+        cont.appendChild(imgEl);
+      }
 
-    if (q.type === 'single') {
-      const revealBtn = document.createElement('button');
-      revealBtn.className = 'secondary';
-      revealBtn.textContent = 'Reveal Answer';
-      const ans = document.createElement('div');
-      ans.className = 'answer';
-      const altList = Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [];
-      const altSuffix = altList.length ? `\n(Also accepted: ${altList.join(', ')})` : '';
-      ans.textContent = (q.answer || '(no answer)') + altSuffix;
-      ans.style.display = 'none';
-      revealBtn.addEventListener('click', () => {
-        ans.style.display = ans.style.display === 'none' ? 'block' : 'none';
-      });
-      cont.appendChild(revealBtn);
-      cont.appendChild(ans);
-    } else {
-      const choices = document.createElement('div');
-      choices.className = 'choices';
-      (q.options || []).forEach((opt, i) => {
-        const b = document.createElement('button');
-        b.className = 'ghost';
-        b.textContent = opt || `Option ${i + 1}`;
-        b.addEventListener('click', () => {
-          // simple feedback: highlight selection if correct
-          const isCorrect = (q.correct || []).includes(i);
-          b.style.borderColor = isCorrect ? '#00ffa3' : '#ff5a5a';
+      // Show definition with reveal button
+      if (q.definition) {
+        const revealBtn = document.createElement('button');
+        revealBtn.className = 'secondary';
+        revealBtn.textContent = 'Show Definition';
+        const defEl = document.createElement('div');
+        defEl.className = 'answer';
+        defEl.textContent = q.definition;
+        defEl.style.display = 'none';
+        revealBtn.addEventListener('click', () => {
+          if (defEl.style.display === 'none') {
+            defEl.style.display = 'block';
+            revealBtn.textContent = 'Hide Definition';
+          } else {
+            defEl.style.display = 'none';
+            revealBtn.textContent = 'Show Definition';
+          }
         });
-        choices.appendChild(b);
-      });
-      cont.appendChild(choices);
+        cont.appendChild(revealBtn);
+        cont.appendChild(defEl);
+      }
+    } else if (q.type === 'icebreak') {
+      // Icebreak prompt display
+      const promptEl = document.createElement('div');
+      promptEl.className = 'question';
+      promptEl.textContent = q.prompt || '(no prompt)';
+      cont.appendChild(promptEl);
+
+      // Show accepted questions with reveal button
+      if (Array.isArray(q.accepted) && q.accepted.length > 0) {
+        const revealBtn = document.createElement('button');
+        revealBtn.className = 'secondary';
+        revealBtn.textContent = 'Show Accepted Questions';
+        const acceptedEl = document.createElement('div');
+        acceptedEl.className = 'answer';
+        acceptedEl.innerHTML = '<strong>Accepted questions:</strong><br>' + q.accepted.map(a => `• ${a}`).join('<br>');
+        acceptedEl.style.display = 'none';
+        revealBtn.addEventListener('click', () => {
+          if (acceptedEl.style.display === 'none') {
+            acceptedEl.style.display = 'block';
+            revealBtn.textContent = 'Hide Accepted Questions';
+          } else {
+            acceptedEl.style.display = 'none';
+            revealBtn.textContent = 'Show Accepted Questions';
+          }
+        });
+        cont.appendChild(revealBtn);
+        cont.appendChild(acceptedEl);
+      }
+    } else {
+      // Regular question display
+      const qEl = document.createElement('div');
+      qEl.className = 'question';
+      qEl.textContent = q.text || '(no question text)';
+      cont.appendChild(qEl);
+
+      if (q.type === 'single') {
+        const revealBtn = document.createElement('button');
+        revealBtn.className = 'secondary';
+        revealBtn.textContent = 'Reveal Answer';
+        const ans = document.createElement('div');
+        ans.className = 'answer';
+        const altList = Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [];
+        const altSuffix = altList.length ? `\n(Also accepted: ${altList.join(', ')})` : '';
+        ans.textContent = (q.answer || '(no answer)') + altSuffix;
+        ans.style.display = 'none';
+        revealBtn.addEventListener('click', () => {
+          ans.style.display = ans.style.display === 'none' ? 'block' : 'none';
+        });
+        cont.appendChild(revealBtn);
+        cont.appendChild(ans);
+      } else {
+        const choices = document.createElement('div');
+        choices.className = 'choices';
+        (q.options || []).forEach((opt, i) => {
+          const b = document.createElement('button');
+          b.className = 'ghost';
+          b.textContent = opt || `Option ${i + 1}`;
+          b.addEventListener('click', () => {
+            // simple feedback: highlight selection if correct
+            const isCorrect = (q.correct || []).includes(i);
+            b.style.borderColor = isCorrect ? '#00ffa3' : '#ff5a5a';
+          });
+          choices.appendChild(b);
+        });
+        cont.appendChild(choices);
+      }
     }
   }
 
@@ -1433,36 +1582,60 @@
     const list = state.lists.find((l) => l.id === listId);
     const icebreakOption = $('#icebreakGameOption');
     const memoryMadnessOption = $('#memoryMadnessGameOption');
+    const runrunrabbitOption = $('#runrunrabbitGameOption');
+    const tornadoOption = $('#tornadoGameOption');
+    const snakeinaboxOption = $('#snakeinaboxGameOption');
+    const truthsandlieOption = $('#truthsandlieGameOption');
     
-    // Hide Icebreak option for regular questionlists (since they're not compatible)
-    if (icebreakOption) {
-      const shouldHide = !list || list.listType !== 'icebreak';
-      icebreakOption.style.display = shouldHide ? 'none' : 'flex';
-    }
+    const isVocab = list && list.listType === 'vocab';
+    const isIcebreak = list && list.listType === 'icebreak';
     
-    // Hide Memory Madness option for non-vocab lists (since it requires vocab data)
-    if (memoryMadnessOption) {
-      const shouldHide = !list || list.listType !== 'vocab';
-      memoryMadnessOption.style.display = shouldHide ? 'none' : 'flex';
-    }
-    
-    // Ensure a valid option is selected if Icebreak was previously selected but is now hidden
-    const icebreakRadio = document.querySelector('input[name="gameChoice"][value="icebreak"]');
-    if (icebreakRadio && icebreakRadio.checked && icebreakOption && icebreakOption.style.display === 'none') {
-      // Select RunRunRabbit as default when Icebreak is hidden
-      const runrunrabbitRadio = document.querySelector('input[name="gameChoice"][value="runrunrabbit"]');
-      if (runrunrabbitRadio) {
-        runrunrabbitRadio.checked = true;
+    // For vocab lists, ONLY show Memory Madness
+    if (isVocab) {
+      if (runrunrabbitOption) runrunrabbitOption.style.display = 'none';
+      if (tornadoOption) tornadoOption.style.display = 'none';
+      if (snakeinaboxOption) snakeinaboxOption.style.display = 'none';
+      if (truthsandlieOption) truthsandlieOption.style.display = 'none';
+      if (icebreakOption) icebreakOption.style.display = 'none';
+      if (memoryMadnessOption) memoryMadnessOption.style.display = 'flex';
+      
+      // Auto-select Memory Madness for vocab lists
+      const memoryMadnessRadio = document.querySelector('input[name="gameChoice"][value="memorymadness"]');
+      if (memoryMadnessRadio) {
+        memoryMadnessRadio.checked = true;
       }
-    }
-    
-    // Ensure a valid option is selected if Memory Madness was previously selected but is now hidden
-    const memoryMadnessRadio = document.querySelector('input[name="gameChoice"][value="memorymadness"]');
-    if (memoryMadnessRadio && memoryMadnessRadio.checked && memoryMadnessOption && memoryMadnessOption.style.display === 'none') {
-      // Select RunRunRabbit as default when Memory Madness is hidden
-      const runrunrabbitRadio = document.querySelector('input[name="gameChoice"][value="runrunrabbit"]');
-      if (runrunrabbitRadio) {
-        runrunrabbitRadio.checked = true;
+    } else {
+      // For non-vocab lists, show all games except Memory Madness
+      if (runrunrabbitOption) runrunrabbitOption.style.display = 'flex';
+      if (tornadoOption) tornadoOption.style.display = 'flex';
+      if (snakeinaboxOption) snakeinaboxOption.style.display = 'flex';
+      if (truthsandlieOption) truthsandlieOption.style.display = 'flex';
+      if (memoryMadnessOption) memoryMadnessOption.style.display = 'none';
+      
+      // Hide Icebreak option for regular questionlists (since they're not compatible)
+      if (icebreakOption) {
+        const shouldHide = !isIcebreak;
+        icebreakOption.style.display = shouldHide ? 'none' : 'flex';
+      }
+      
+      // Ensure a valid option is selected if Icebreak was previously selected but is now hidden
+      const icebreakRadio = document.querySelector('input[name="gameChoice"][value="icebreak"]');
+      if (icebreakRadio && icebreakRadio.checked && icebreakOption && icebreakOption.style.display === 'none') {
+        // Select RunRunRabbit as default when Icebreak is hidden
+        const runrunrabbitRadio = document.querySelector('input[name="gameChoice"][value="runrunrabbit"]');
+        if (runrunrabbitRadio) {
+          runrunrabbitRadio.checked = true;
+        }
+      }
+      
+      // Ensure a valid option is selected if Memory Madness was previously selected but is now hidden
+      const memoryMadnessRadio = document.querySelector('input[name="gameChoice"][value="memorymadness"]');
+      if (memoryMadnessRadio && memoryMadnessRadio.checked && memoryMadnessOption && memoryMadnessOption.style.display === 'none') {
+        // Select RunRunRabbit as default when Memory Madness is hidden
+        const runrunrabbitRadio = document.querySelector('input[name="gameChoice"][value="runrunrabbit"]');
+        if (runrunrabbitRadio) {
+          runrunrabbitRadio.checked = true;
+        }
       }
     }
     

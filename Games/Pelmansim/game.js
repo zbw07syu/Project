@@ -552,12 +552,14 @@
       renderScoreboard();
       
       flippedCards = [];
-      isProcessing = false;
       
       if (matchedPairs >= totalPairs) {
         setTimeout(() => endGame(), 1000);
       } else {
-        setTimeout(() => startTurn(), 1500);
+        setTimeout(() => {
+          isProcessing = false;
+          startTurn();
+        }, 1500);
       }
     } else {
       // No match
@@ -629,11 +631,11 @@
     controlsDiv.innerHTML = '';
     
     // Trigger victory celebration
-    if (window.VictoryManager) {
+    if (window.VictoryManager && window.VictoryManager.playVictorySequence) {
       const winnerName = winners.length === 1 ? winners[0].name : 'Winners';
       const winnerColor = winners.length === 1 ? winners[0].color : '#FFD700';
       
-      window.VictoryManager.playVictory({
+      window.VictoryManager.playVictorySequence({
         winnerName: winnerName,
         winnerColor: winnerColor,
         isMuted: isMuted
@@ -654,6 +656,12 @@
       window.VictoryManager.setMusicVolume(volume);
     }
   });
+  
+  // Set initial volume for VictoryManager
+  const initialVolume = volumeSlider.value / 100;
+  if (window.VictoryManager && window.VictoryManager.setMusicVolume) {
+    window.VictoryManager.setMusicVolume(initialVolume);
+  }
 
   restartBtn.addEventListener('click', () => {
     if (confirm('Are you sure you want to restart the game?')) {

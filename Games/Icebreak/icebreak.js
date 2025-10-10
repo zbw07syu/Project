@@ -30,6 +30,7 @@
   const correctSfx = document.getElementById('correctSfx');
   const incorrectSfx = document.getElementById('incorrectSfx');
   const winSfx = document.getElementById('winSfx');
+  const diceSfx = document.getElementById('diceSfx');
   const confettiCanvas = document.getElementById('confettiCanvas');
   const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d', { alpha: true }) : null;
   const strobeOverlay = document.getElementById('strobeOverlay');
@@ -294,6 +295,12 @@
   function handleDiceRollClick() {
     if (turnOrderFinalized || !teams.length) return;
     if (diceRollButton) diceRollButton.disabled = true;
+
+    // Play dice sound
+    if (diceSfx) {
+      diceSfx.currentTime = 0;
+      diceSfx.play().catch(() => {});
+    }
 
     let rolls = [];
     do {
@@ -716,6 +723,12 @@
       window.VictoryManager.setMusicVolume(volume);
     }
   });
+  
+  // Set initial volume for VictoryManager
+  const initialVolume = volumeSlider.value / 100;
+  if (window.VictoryManager && window.VictoryManager.setMusicVolume) {
+    window.VictoryManager.setMusicVolume(initialVolume);
+  }
 
   restartBtn.addEventListener('click', () => {
     // Stop Victory Manager effects

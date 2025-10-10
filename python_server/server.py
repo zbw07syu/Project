@@ -128,12 +128,13 @@ def search_wikimedia_image(word: str) -> Optional[str]:
         return None
 
 
-def search_unsplash_image(word: str) -> Optional[str]:
+def search_unsplash_image(word: str, random_page: bool = False) -> Optional[str]:
     """
     Search for a free image on Unsplash (requires API key).
     
     Args:
         word: The vocabulary word to search for
+        random_page: If True, fetch a random page of results (for variety)
         
     Returns:
         URL of the image, or None if not found
@@ -143,7 +144,11 @@ def search_unsplash_image(word: str) -> Optional[str]:
         return None
     
     try:
-        search_url = f"https://api.unsplash.com/search/photos?query={urllib.parse.quote(word)}&per_page=1&orientation=landscape"
+        # If random_page is True, fetch multiple results and pick a random one
+        per_page = 10 if random_page else 1
+        page = 1
+        
+        search_url = f"https://api.unsplash.com/search/photos?query={urllib.parse.quote(word)}&per_page={per_page}&page={page}&orientation=landscape"
         
         req = urllib.request.Request(search_url)
         req.add_header('Authorization', f'Client-ID {UNSPLASH_ACCESS_KEY}')
@@ -154,8 +159,11 @@ def search_unsplash_image(word: str) -> Optional[str]:
         results = data.get('results', [])
         
         if results and len(results) > 0:
-            image_url = results[0]['urls']['regular']
-            logger.info(f"Found Unsplash image for '{word}': {image_url}")
+            # Pick a random result if random_page is True, otherwise take the first
+            import random
+            index = random.randint(0, len(results) - 1) if random_page and len(results) > 1 else 0
+            image_url = results[index]['urls']['regular']
+            logger.info(f"Found Unsplash image for '{word}' (index {index}/{len(results)}): {image_url}")
             return image_url
         
         logger.info(f"No Unsplash image found for '{word}'")
@@ -217,15 +225,25 @@ def search_and_save_image(word: str, force_regenerate: bool = False) -> Optional
         return f"vocab_images/{image_path.name}"
     
     try:
-        logger.info(f"Searching for free image for word: '{word}'")
+        logger.info(f"Searching for free image for word: '{word}' (force_regenerate={force_regenerate})")
         
-        # Try Wikimedia Commons first (free, no API key needed)
-        image_url = search_wikimedia_image(word)
-        
-        # If Wikimedia fails, try Unsplash as fallback
-        if not image_url:
-            logger.info(f"Trying Unsplash fallback for '{word}'")
-            image_url = search_unsplash_image(word)
+        # When regenerating, prefer Unsplash with randomization for variety
+        # Otherwise, try Wikimedia first (free, no API key needed)
+        if force_regenerate:
+            logger.info(f"Force regenerate: trying Unsplash with random selection for '{word}'")
+            image_url = search_unsplash_image(word, random_page=True)
+            
+            # If Unsplash fails, fall back to Wikimedia
+            if not image_url:
+                logger.info(f"Unsplash failed, trying Wikimedia for '{word}'")
+                image_url = search_wikimedia_image(word)
+        else:
+            # Normal flow: Wikimedia first, then Unsplash
+            image_url = search_wikimedia_image(word)
+            
+            if not image_url:
+                logger.info(f"Trying Unsplash fallback for '{word}'")
+                image_url = search_unsplash_image(word, random_page=False)
         
         # If we found an image URL, download it
         if image_url:
@@ -405,18 +423,21 @@ def generate_vocab():
             if image_path:
                 images_generated += 1
                 image_generated = True
+                # Convert relative path to full URL
+                image_url = f"http://localhost:{PORT}/{image_path}"
             else:
                 images_failed += 1
                 image_generated = False
                 # Use placeholder or empty string
-                image_path = ""
+                image_url = ""
             
             results.append({
                 'id': vocab_id,
                 'type': 'vocab',
                 'word': word,
                 'definition': definition,
-                'image': image_path,
+                'image': image_url,
+                'imageUrl': image_url,  # Also include imageUrl for frontend compatibility
                 'imageGenerated': image_generated
             })
         
@@ -473,15 +494,19 @@ def generate_questions():
                 
                 vocab_id = hashlib.md5(f"{word}{datetime.now().isoformat()}".encode()).hexdigest()[:8]
                 
-                # Generate image
-                image_path = generate_and_save_image(word, False)
+                # Search and download free image
+                image_path = search_and_save_image(word, False)
+                
+                # Convert relative path to full URL
+                image_url = f"http://localhost:{PORT}/{image_path}" if image_path else ''
                 
                 results.append({
                     'id': vocab_id,
                     'type': 'vocab',
                     'word': word,
                     'definition': definition,
-                    'image': image_path if image_path else ''
+                    'image': image_url,
+                    'imageUrl': image_url  # Also include imageUrl for frontend compatibility
                 })
             
             return jsonify({
@@ -496,6 +521,69 @@ def generate_questions():
     except Exception as e:
         logger.error(f"Error in generate endpoint: {str(e)}")
         return jsonify({'error': 'Failed to generate questions. Please try again.'}), 500
+
+
+@app.route('/regenerate_image', methods=['POST'])
+def regenerate_image():
+    """
+    Regenerate/find a different image for a specific vocabulary word.
+    
+    Request body:
+    {
+        "word": "Ocean"
+    }
+    
+    Response:
+    {
+        "success": true,
+        "word": "Ocean",
+        "image": "vocab_images/ocean.png",
+        "imageGenerated": true
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        word = data.get('word')
+        
+        if not word:
+            return jsonify({'error': 'Missing required field: word'}), 400
+        
+        logger.info(f"Regenerating image for word: '{word}'")
+        
+        # Force regenerate the image (will download a new one)
+        image_path = search_and_save_image(word, force_regenerate=True)
+        
+        if image_path:
+            # Convert relative path to full URL
+            image_url = f"http://localhost:{PORT}/{image_path}"
+            logger.info(f"Successfully regenerated image for '{word}': {image_url}")
+            
+            return jsonify({
+                'success': True,
+                'word': word,
+                'image': image_url,
+                'imageUrl': image_url,
+                'imageGenerated': True
+            })
+        else:
+            logger.warning(f"Failed to find/download new image for '{word}'")
+            return jsonify({
+                'success': False,
+                'word': word,
+                'image': '',
+                'imageUrl': '',
+                'imageGenerated': False,
+                'error': 'No image found for this word'
+            }), 404
+        
+    except Exception as e:
+        logger.error(f"Error in regenerate_image endpoint: {str(e)}")
+        return jsonify({'error': 'Failed to regenerate image. Please try again.'}), 500
 
 
 @app.errorhandler(404)
