@@ -630,6 +630,12 @@
     setMessage(answerDiv, 'Game Over!');
     controlsDiv.innerHTML = '';
     
+    // Stop background music before victory celebration
+    if (bgMusic) {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+    }
+    
     // Trigger victory celebration
     if (window.VictoryManager && window.VictoryManager.playVictorySequence) {
       const winnerName = winners.length === 1 ? winners[0].name : 'Winners';
