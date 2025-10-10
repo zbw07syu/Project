@@ -1109,20 +1109,19 @@
     setMessage1('Dice Rolls:');
     setMessage2(rollsText);
     
-    // Find team with lowest roll for question - only consider human teams
-    const humanTeamsList = teams.filter(team => !isTeamAI(team));
+    // Find team with lowest roll among ALL teams
+    const lowestRollTeam = teams.reduce((min, team) => 
+      team.roll < min.roll ? team : min
+    );
     
-    if (humanTeamsList.length > 0) {
-      // Find human team with lowest roll
-      const lowestRollTeam = humanTeamsList.reduce((min, team) => 
-        team.roll < min.roll ? team : min
-      );
-      
+    // If the team with lowest roll is human, ask them a question
+    if (!isTeamAI(lowestRollTeam)) {
       setTimeout(() => {
         askQuestion(lowestRollTeam);
       }, 2000);
     } else {
-      // No human teams, skip question phase
+      // Lowest roll team is AI, skip question phase
+      setMessage3(`${lowestRollTeam.name} rolled lowest (${lowestRollTeam.roll}) but is AI - no question asked.`);
       setTimeout(() => startPlayerTurn(), 2000);
     }
   }
@@ -1158,6 +1157,11 @@
     if (questionType === 'multiple' && window.MultipleChoiceModal) {
       // Multiple choice question
       const options = question.options || [];
+      
+      // Ensure modal is created
+      if (!document.getElementById('multipleChoiceModal')) {
+        window.MultipleChoiceModal.createModal();
+      }
       
       window.MultipleChoiceModal.showModal(
         questionText,
