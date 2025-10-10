@@ -289,6 +289,17 @@ button.danger {
   50% { transform: translateY(-10px); }
 }
 
+.homepage-tagline {
+  font-size: 24px;
+  color: var(--accent);
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+  font-weight: 400;
+}
+
 .homepage-buttons {
   display: flex;
   gap: 20px;
