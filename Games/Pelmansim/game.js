@@ -12,6 +12,7 @@
   const bgMusic = document.getElementById('bgMusic');
   const pairFoundSfx = document.getElementById('pairFoundSfx');
   const pairNotFoundSfx = document.getElementById('pairNotFoundSfx');
+  const diceSfx = document.getElementById('diceSfx');
   
   const volumeSlider = document.getElementById('volumeSlider');
   const restartBtn = document.getElementById('restartBtn');
@@ -21,7 +22,8 @@
   const teamCountModal = document.getElementById('teamCountModal');
   const humanCountModal = document.getElementById('humanCountModal');
   const vocabCountModal = document.getElementById('vocabCountModal');
-  const gameModeModal = document.getElementById('gameModeModal');
+  const vocabCountSelect = document.getElementById('vocabCountSelect');
+  const vocabCountConfirmBtn = document.getElementById('vocabCountConfirmBtn');
   const rulesPanel = document.getElementById('rulesPanel');
   const closeRules = document.getElementById('closeRules');
 
@@ -29,8 +31,8 @@
   let payload = null;
   let teams = [];
   let currentTeamIdx = 0;
-  let gameMode = 'image'; // 'image' or 'definition'
   let vocabCount = 12;
+  let selectedVocab = []; // Store selected vocab items for tooltip access
   let cards = []; // Array of card objects
   let flippedCards = [];
   let matchedPairs = 0;
@@ -39,6 +41,7 @@
   let turnOrderFinalized = false;
   let diceRollButton = null;
   let victoryTriggered = false;
+  let isMuted = false; // Track mute state
 
   // Team colors
   const teamColors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3'];
@@ -124,7 +127,7 @@
           teams[j].isHuman = j < humanCount;
         }
         hide(humanCountModal);
-        show(vocabCountModal);
+        showVocabCountModal();
       });
       humanButtons.appendChild(btn);
     }
@@ -132,29 +135,39 @@
     show(humanCountModal);
   }
 
-  document.querySelectorAll('.vocabCountBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      vocabCount = parseInt(btn.dataset.count);
-      if (vocabCount > payload.questions.length) {
-        vocabCount = payload.questions.length;
-      }
-      hide(vocabCountModal);
-      show(gameModeModal);
-    });
-  });
+  function showVocabCountModal() {
+    // Populate dropdown with options from 6 to 25
+    vocabCountSelect.innerHTML = '';
+    const maxAvailable = Math.min(25, payload.questions.length);
+    
+    for (let i = 6; i <= maxAvailable; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = i;
+      vocabCountSelect.appendChild(option);
+    }
+    
+    // Set default to 12 if available, otherwise the middle option
+    const defaultValue = maxAvailable >= 12 ? 12 : Math.floor((6 + maxAvailable) / 2);
+    vocabCountSelect.value = defaultValue;
+    
+    show(vocabCountModal);
+  }
 
-  document.querySelectorAll('.gameModeBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      gameMode = btn.dataset.mode;
-      hide(gameModeModal);
-      setupGame();
-    });
+  // Vocab count confirm button handler
+  vocabCountConfirmBtn.addEventListener('click', () => {
+    vocabCount = parseInt(vocabCountSelect.value);
+    if (vocabCount > payload.questions.length) {
+      vocabCount = payload.questions.length;
+    }
+    hide(vocabCountModal);
+    setupGame(); // Go directly to game setup (always use image mode)
   });
 
   function setupGame() {
     // Shuffle and select vocab items
     const shuffled = [...payload.questions].sort(() => Math.random() - 0.5);
-    const selectedVocab = shuffled.slice(0, vocabCount);
+    selectedVocab = shuffled.slice(0, vocabCount);
     
     totalPairs = selectedVocab.length;
     
@@ -163,36 +176,26 @@
     const rightCards = [];
     
     selectedVocab.forEach((vocab, idx) => {
-      // Left side: word cards
+      // Left side: word cards (with definition stored for tooltip)
       leftCards.push({
         id: `word-${idx}`,
         type: 'word',
         content: vocab.word || '',
+        definition: vocab.definition || '', // Store definition for tooltip
         pairId: idx,
         flipped: false,
         matched: false
       });
       
-      // Right side: image or definition cards
-      if (gameMode === 'image') {
-        rightCards.push({
-          id: `image-${idx}`,
-          type: 'image',
-          content: vocab.image || '',
-          pairId: idx,
-          flipped: false,
-          matched: false
-        });
-      } else {
-        rightCards.push({
-          id: `definition-${idx}`,
-          type: 'definition',
-          content: vocab.definition || '',
-          pairId: idx,
-          flipped: false,
-          matched: false
-        });
-      }
+      // Right side: always use images
+      rightCards.push({
+        id: `image-${idx}`,
+        type: 'image',
+        content: vocab.image || '',
+        pairId: idx,
+        flipped: false,
+        matched: false
+      });
     });
     
     // Shuffle each side independently
@@ -236,23 +239,23 @@
     }
     
     const cardsArea = document.getElementById('cardsArea');
-    const availableHeight = cardsArea.clientHeight - 40; // Account for padding and coordinate labels
-    const availableWidth = cardsArea.clientWidth - 40;
+    const availableHeight = cardsArea.clientHeight - 20; // Account for reduced padding and coordinate labels
+    const availableWidth = cardsArea.clientWidth - 20;
     
     // Estimate gap size
     let estimatedGap = numCards > 16 ? 6 : numCards > 8 ? 8 : 10;
     
     // Calculate card size to fit all cards without scrolling
-    const totalVerticalGap = (rows - 1) * estimatedGap + 60; // gaps + padding + coord space
+    const totalVerticalGap = (rows - 1) * estimatedGap + 50; // gaps + padding + coord space
     const maxCardHeight = (availableHeight - totalVerticalGap) / rows;
     
     // Account for two grids side by side with divider
-    const dividerSpace = 30; // Space for center divider
-    const totalHorizontalGap = ((cols - 1) * estimatedGap * 2) + (cols * 2 * 20) + dividerSpace; // gaps for both grids + padding + divider
+    const dividerSpace = 15; // Space for center divider (reduced from 30)
+    const totalHorizontalGap = ((cols - 1) * estimatedGap * 2) + (cols * 2 * 10) + dividerSpace; // gaps for both grids + padding + divider
     const maxCardWidth = (availableWidth - totalHorizontalGap) / (cols * 2);
     
-    // Use the smaller dimension to keep cards square
-    let cardSize = Math.min(maxCardHeight, maxCardWidth, 180); // Max 180px
+    // Use the smaller dimension to keep cards square - removed max limit to allow cards to fill screen
+    let cardSize = Math.min(maxCardHeight, maxCardWidth);
     cardSize = Math.max(cardSize, 60); // Min 60px
     
     // Adjust gap based on final card size
@@ -289,29 +292,27 @@
     rightGrid.className = 'card-grid';
     rightGrid.id = 'rightGrid';
     
-    // Calculate coordinates for all cards (single coordinate system across both grids)
-    // Total columns = cols * 2 (both grids combined)
-    const totalCols = cols * 2;
-    let cardIndex = 0;
+    // Calculate coordinates for all cards
+    // Each grid has its own layout, but coordinates span across both grids
+    // Left grid: columns 1 to cols
+    // Right grid: columns (cols+1) to (cols*2)
     
     // Add cards to left grid
-    leftCards.forEach((card) => {
-      const row = Math.floor(cardIndex / totalCols);
-      const col = cardIndex % totalCols;
+    leftCards.forEach((card, index) => {
+      const row = Math.floor(index / cols);
+      const col = index % cols;
       const coordinate = getCoordinate(row, col);
       const cardEl = createCardElement(card, coordinate);
       leftGrid.appendChild(cardEl);
-      cardIndex++;
     });
     
-    // Add cards to right grid (continuing coordinate system)
-    rightCards.forEach((card) => {
-      const row = Math.floor(cardIndex / totalCols);
-      const col = cardIndex % totalCols;
+    // Add cards to right grid (columns continue from left grid)
+    rightCards.forEach((card, index) => {
+      const row = Math.floor(index / cols);
+      const col = (index % cols) + cols; // Offset by cols to continue numbering
       const coordinate = getCoordinate(row, col);
       const cardEl = createCardElement(card, coordinate);
       rightGrid.appendChild(cardEl);
-      cardIndex++;
     });
     
     cardsGrid.appendChild(leftGrid);
@@ -331,11 +332,24 @@
     cardEl.dataset.coordinate = coordinate;
     cardEl.style.position = 'relative';
     
+    // Initially disable cards until dice is rolled
+    if (!turnOrderFinalized) {
+      cardEl.classList.add('disabled');
+    }
+    
     // Add coordinate label
     const coordLabel = document.createElement('div');
     coordLabel.className = 'coordinate-label';
     coordLabel.textContent = coordinate;
     cardEl.appendChild(coordLabel);
+    
+    // Add definition tooltip for word cards
+    if (card.type === 'word' && card.definition) {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'definition-tooltip';
+      tooltip.textContent = card.definition;
+      cardEl.appendChild(tooltip);
+    }
     
     // Card back (face down)
     const cardBack = document.createElement('div');
@@ -376,9 +390,23 @@
   }
 
   function rollDiceForTurnOrder() {
-    teams.forEach(team => {
-      team.roll = Math.floor(Math.random() * 6) + 1;
-    });
+    // Play dice sound
+    if (diceSfx) {
+      diceSfx.currentTime = 0;
+      diceSfx.play().catch(() => {});
+    }
+    
+    // Roll dice for all teams, ensuring no duplicates
+    let hasDuplicates = true;
+    while (hasDuplicates) {
+      teams.forEach(team => {
+        team.roll = Math.floor(Math.random() * 6) + 1;
+      });
+      
+      // Check for duplicate rolls
+      const rolls = teams.map(t => t.roll);
+      hasDuplicates = rolls.length !== new Set(rolls).size;
+    }
     
     teams.sort((a, b) => b.roll - a.roll);
     
@@ -388,6 +416,11 @@
     
     turnOrderFinalized = true;
     currentTeamIdx = 0;
+    
+    // Enable all cards now that turn order is set
+    document.querySelectorAll('.memory-card').forEach(card => {
+      card.classList.remove('disabled');
+    });
     
     if (diceRollButton) {
       diceRollButton.remove();
@@ -406,7 +439,8 @@
     scoresEl.innerHTML = '';
     teams.forEach((team, idx) => {
       const li = document.createElement('li');
-      li.textContent = `${team.name}: ${team.score}`;
+      const aiLabel = team.isHuman ? '' : ' (AI)';
+      li.textContent = `${team.name}${aiLabel}: ${team.score}`;
       li.style.borderColor = team.color;
       if (turnOrderFinalized && idx === currentTeamIdx) {
         li.classList.add('current-turn');
@@ -422,6 +456,17 @@
     setMessage(instructionDiv, `${team.name}'s turn!`);
     setMessage(answerDiv, 'Select one card from each side.');
     
+    // Reset all non-matched cards to unflipped state
+    cards.forEach(card => {
+      if (!card.matched) {
+        card.flipped = false;
+        const cardEl = document.querySelector(`[data-id="${card.id}"]`);
+        if (cardEl) {
+          cardEl.classList.remove('flipped');
+        }
+      }
+    });
+    
     flippedCards = [];
     renderScoreboard();
     
@@ -432,6 +477,9 @@
 
   function handleCardClick(cardId) {
     if (isProcessing || victoryTriggered) return;
+    
+    // Prevent clicking cards before dice roll
+    if (!turnOrderFinalized) return;
     
     const team = teams[currentTeamIdx];
     if (!team.isHuman) return;
@@ -467,7 +515,7 @@
     
     if (flippedCards.length === 2) {
       isProcessing = true;
-      setTimeout(() => checkMatch(), 3000);
+      setTimeout(() => checkMatch(), 500);
     }
   }
 
@@ -536,7 +584,7 @@
         // Next team
         currentTeamIdx = (currentTeamIdx + 1) % teams.length;
         startTurn();
-      }, 1000);
+      }, 3000);
     }
   }
 
@@ -597,6 +645,9 @@
   volumeSlider.addEventListener('input', (e) => {
     const volume = e.target.value / 100;
     bgMusic.volume = volume;
+    
+    // Update mute state based on volume
+    isMuted = (volume === 0);
     
     // Notify Victory Manager of volume change
     if (window.VictoryManager) {

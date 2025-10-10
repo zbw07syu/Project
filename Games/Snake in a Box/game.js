@@ -14,6 +14,7 @@
   const scoresEl = document.getElementById('scores');
   const bgMusic = document.getElementById('bgMusic');
   const diceSfx = document.getElementById('diceSfx');
+  const bonusSfx = document.getElementById('bonusSfx');
   const volumeSlider = document.getElementById('volumeSlider');
   const restartBtn = document.getElementById('restartBtn');
   const rulesBtn = document.getElementById('rulesBtn');
@@ -57,6 +58,12 @@
   function init() {
     parsePayloadFromHash();
     setupEventListeners();
+    
+    // Initialize the multiple choice modal system
+    if (window.MultipleChoiceModal) {
+      window.MultipleChoiceModal.createModal();
+    }
+    
     showModal(teamCountModal);
   }
 
@@ -1012,13 +1019,13 @@
       currentTeam.score++;
       setMessage1(`${currentTeam.name} found the snake HEAD! 🐍`);
       setMessage2(`+1 point!`);
-      playSound(diceSfx);
+      playSound(bonusSfx);
     } else if (type === 'tail') {
       tailFound = true;
       currentTeam.score++;
       setMessage1(`${currentTeam.name} found the snake TAIL! 🐍`);
       setMessage2(`+1 point!`);
-      playSound(diceSfx);
+      playSound(bonusSfx);
     } else {
       setMessage1(`${currentTeam.name} revealed a body segment.`);
       setMessage2('');
@@ -1079,10 +1086,17 @@
     const rollBtn = document.getElementById('rollDiceBtn');
     if (rollBtn) rollBtn.remove();
     
-    // Roll dice for all teams
-    teams.forEach(team => {
-      team.roll = Math.floor(Math.random() * 6) + 1;
-    });
+    // Roll dice for all teams, ensuring no duplicates
+    let hasDuplicates = true;
+    while (hasDuplicates) {
+      teams.forEach(team => {
+        team.roll = Math.floor(Math.random() * 6) + 1;
+      });
+      
+      // Check for duplicate rolls
+      const rolls = teams.map(t => t.roll);
+      hasDuplicates = rolls.length !== new Set(rolls).size;
+    }
     
     // Sort by roll (highest first)
     turnOrder = teams

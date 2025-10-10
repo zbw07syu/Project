@@ -52,6 +52,7 @@
   <audio id="bgMusic" src="handbagsgladrags.mp3" loop></audio>
   <audio id="pairFoundSfx" src="pairfound.wav"></audio>
   <audio id="pairNotFoundSfx" src="pairnotfound.wav"></audio>
+  <audio id="diceSfx" src="dice.wav"></audio>
 
   <!-- Setup Modals -->
   <div id="teamCountModal" class="modal">
@@ -75,27 +76,14 @@
   <div id="vocabCountModal" class="modal">
     <div class="modalContent">
       <h2>Select number of vocab items</h2>
-      <p>Choose how many vocabulary pairs to use (max 24)</p>
-      <div class="modalButtons">
-        <button class="vpBtn vocabCountBtn" data-count="6">6</button>
-        <button class="vpBtn vocabCountBtn" data-count="8">8</button>
-        <button class="vpBtn vocabCountBtn" data-count="10">10</button>
-        <button class="vpBtn vocabCountBtn" data-count="12">12</button>
-        <button class="vpBtn vocabCountBtn" data-count="16">16</button>
-        <button class="vpBtn vocabCountBtn" data-count="20">20</button>
-        <button class="vpBtn vocabCountBtn" data-count="24">24</button>
+      <p>Choose how many vocabulary pairs to use (6-25)</p>
+      <div style="margin: 20px 0;">
+        <label for="vocabCountSelect" style="display: block; margin-bottom: 10px; font-size: 1.1rem;">Number of pairs:</label>
+        <select id="vocabCountSelect" style="width: 100%; padding: 10px; font-size: 1.1rem; border-radius: 8px; border: 2px solid #333;">
+          <!-- Options will be populated by JavaScript -->
+        </select>
       </div>
-    </div>
-  </div>
-
-  <div id="gameModeModal" class="modal">
-    <div class="modalContent">
-      <h2>Select game mode</h2>
-      <p>Choose what to match with words:</p>
-      <div class="modalButtons">
-        <button class="vpBtn gameModeBtn" data-mode="image">Word / Image</button>
-        <button class="vpBtn gameModeBtn" data-mode="definition">Word / Definition</button>
-      </div>
+      <button id="vocabCountConfirmBtn" class="vpBtn">Start Game</button>
     </div>
   </div>
 
@@ -105,7 +93,8 @@
       <h2>How to Play</h2>
       <ol>
         <li>Teams roll dice to determine turn order.</li>
-        <li>On your turn, select one card from the left side (words) and one from the right side (images/definitions).</li>
+        <li>On your turn, select one card from the left side (words) and one from the right side (images).</li>
+        <li>Hover over a word card to see its definition!</li>
         <li>Both cards will remain visible for 3 seconds after the second card is revealed.</li>
         <li>If you find a matching pair, the cards disappear and you score 1 point. You get another turn immediately.</li>
         <li>If the cards don't match, your turn ends and play passes to the next team.</li>
