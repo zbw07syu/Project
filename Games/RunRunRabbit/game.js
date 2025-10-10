@@ -486,7 +486,7 @@ let musicStarted = false;
 function startMusicOnce() {
   if (!musicStarted) {
     bgMusic.loop = true;      // ensure it loops
-    bgMusic.volume = 0.3;     // set your desired volume
+    bgMusic.volume = volumeSlider.value / 100;     // set volume from slider
     bgMusic.play().catch(() => console.log("Autoplay blocked"));
     musicStarted = true;
   }
@@ -534,25 +534,17 @@ window.addEventListener('modalClosed', (event) => {
   modalSelectionMade = false;
 });
 
-// Mute button
-const muteBtn = document.getElementById("muteBtn");
-let isMuted = false;
+// Volume slider
+const volumeSlider = document.getElementById("volumeSlider");
 
-muteBtn.addEventListener("click", () => {
-  isMuted = !isMuted;
-  bgMusic.muted = isMuted;
-  diceRollSound.muted = isMuted;
-  pssClick.muted = isMuted;
-  winSound.muted = isMuted;
-  loseSound.muted = isMuted;
-  victoryMusic.muted = isMuted;
-
-  // Update Victory Manager mute state
+volumeSlider.addEventListener("input", () => {
+  const volume = volumeSlider.value / 100;
+  bgMusic.volume = volume;
+  
+  // Update Victory Manager music volume
   if (window.VictoryManager) {
-    window.VictoryManager.updateMuteState(isMuted);
+    window.VictoryManager.setMusicVolume(volume);
   }
-
-  muteBtn.textContent = isMuted ? "Unmute" : "Mute";
 });
 
 // ----- Set initial volumes -----
@@ -1687,7 +1679,7 @@ function declareVictory(winnerName, points) {
   fadeOutAudio(bgMusic, 800, 0, () => {
     if (window.VictoryManager) {
       window.VictoryManager.playVictorySequence({
-        getMuteState: () => isMuted,
+        getMuteState: () => false,
         winnerText: victoryText,
         winnerColor: winnerColor
       });

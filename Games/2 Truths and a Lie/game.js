@@ -16,7 +16,7 @@
   const turnsLeftEl = document.getElementById('turnsLeft');
 
   const bgMusic = document.getElementById('bgMusic');
-  const muteBtn = document.getElementById('muteBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
   const restartBtn = document.getElementById('restartBtn');
   const endGameBtn = document.getElementById('endGameBtn');
   const rulesBtn = document.getElementById('rulesBtn');
@@ -40,7 +40,6 @@
   let currentRound = 0; // 0 = teacher example, 1+ = team rounds
   let currentTeamIndex = 0; // which team's turn it is
   let gamePhase = 'setup'; // setup, writing, guessing, revealing, nextRound, gameOver
-  let isMuted = false;
   let victoryTriggered = false;
   let aiCorrectAnswer = null; // Tracks which sentence (A, B, or C) is false when AI submits
 
@@ -125,7 +124,7 @@
     });
 
     // Control buttons
-    muteBtn.addEventListener('click', toggleMute);
+    volumeSlider.addEventListener('input', handleVolumeChange);
     restartBtn.addEventListener('click', restartGame);
     endGameBtn.addEventListener('click', forceEndGame);
     rulesBtn.addEventListener('click', () => showModal(rulesPanel));
@@ -632,22 +631,20 @@
     modal.classList.remove('show');
   }
 
-  function toggleMute() {
-    isMuted = !isMuted;
-    bgMusic.muted = isMuted;
+  function handleVolumeChange(e) {
+    const volume = e.target.value / 100;
+    bgMusic.volume = volume;
     
-    if (window.VictoryManager && window.VictoryManager.updateMuteState) {
-      window.VictoryManager.updateMuteState(isMuted);
+    if (window.VictoryManager && window.VictoryManager.setMusicVolume) {
+      window.VictoryManager.setMusicVolume(volume);
     }
   }
 
   function tryPlayMusic() {
-    if (!isMuted) {
-      bgMusic.volume = 0.3; // Set volume to 30%
-      bgMusic.play().catch(err => {
-        console.log('Music autoplay prevented:', err);
-      });
-    }
+    bgMusic.volume = volumeSlider.value / 100;
+    bgMusic.play().catch(err => {
+      console.log('Music autoplay prevented:', err);
+    });
   }
 
   function restartGame() {

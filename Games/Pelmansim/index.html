@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Memory Madness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Font: Bangers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&display=swap">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="gameTitle">Memory Madness</h1>
+
+  <div id="gameContainer">
+    <!-- Left Panel -->
+    <div id="leftPanel">
+      <div id="volumeControl">
+        <label for="volumeSlider">🔊 Music Volume</label>
+        <input type="range" id="volumeSlider" min="0" max="85" value="30">
+      </div>
+      <button id="restartBtn">Restart</button>
+      <button id="rulesBtn">Rules</button>
+      <button id="endGameBtn">End Game</button>
+    </div>
+
+    <!-- Center: Cards + Message Area -->
+    <div id="centerPanel">
+      <div id="cardsArea">
+        <div id="cardsGrid"></div>
+      </div>
+      <div id="messageArea">
+        <div id="instructionDiv" class="messageBox" aria-live="polite">Welcome to Memory Madness!</div>
+        <div id="answerDiv" class="messageBox"></div>
+        <div id="controlsDiv" class="messageBox"></div>
+      </div>
+    </div>
+
+    <!-- Right: Scoreboard -->
+    <div id="scorePanel">
+      <ul id="scores"></ul>
+    </div>
+  </div>
+
+  <canvas id="confettiCanvas" class="hidden" aria-hidden="true"></canvas>
+  <div id="strobeOverlay" class="hidden" aria-hidden="true"></div>
+
+  <!-- Audio -->
+  <audio id="bgMusic" src="handbagsgladrags.mp3" loop></audio>
+  <audio id="pairFoundSfx" src="pairfound.wav"></audio>
+  <audio id="pairNotFoundSfx" src="pairnotfound.wav"></audio>
+
+  <!-- Setup Modals -->
+  <div id="teamCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of teams</h2>
+      <div class="modalButtons">
+        <button class="vpBtn teamCountBtn" data-teams="2">2</button>
+        <button class="vpBtn teamCountBtn" data-teams="3">3</button>
+        <button class="vpBtn teamCountBtn" data-teams="4">4</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="humanCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of human teams</h2>
+      <div class="modalButtons" id="humanButtons"></div>
+    </div>
+  </div>
+
+  <div id="vocabCountModal" class="modal">
+    <div class="modalContent">
+      <h2>Select number of vocab items</h2>
+      <p>Choose how many vocabulary pairs to use (max 24)</p>
+      <div class="modalButtons">
+        <button class="vpBtn vocabCountBtn" data-count="6">6</button>
+        <button class="vpBtn vocabCountBtn" data-count="8">8</button>
+        <button class="vpBtn vocabCountBtn" data-count="10">10</button>
+        <button class="vpBtn vocabCountBtn" data-count="12">12</button>
+        <button class="vpBtn vocabCountBtn" data-count="16">16</button>
+        <button class="vpBtn vocabCountBtn" data-count="20">20</button>
+        <button class="vpBtn vocabCountBtn" data-count="24">24</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameModeModal" class="modal">
+    <div class="modalContent">
+      <h2>Select game mode</h2>
+      <p>Choose what to match with words:</p>
+      <div class="modalButtons">
+        <button class="vpBtn gameModeBtn" data-mode="image">Word / Image</button>
+        <button class="vpBtn gameModeBtn" data-mode="definition">Word / Definition</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules -->
+  <div id="rulesPanel" class="modal">
+    <div class="modalContent rules">
+      <h2>How to Play</h2>
+      <ol>
+        <li>Teams roll dice to determine turn order.</li>
+        <li>On your turn, select one card from the left side (words) and one from the right side (images/definitions).</li>
+        <li>Both cards will remain visible for 3 seconds after the second card is revealed.</li>
+        <li>If you find a matching pair, the cards disappear and you score 1 point. You get another turn immediately.</li>
+        <li>If the cards don't match, your turn ends and play passes to the next team.</li>
+        <li>The game ends when all pairs are found. The team with the most points wins!</li>
+      </ol>
+      <button id="closeRules">Close</button>
+    </div>
+  </div>
+
+  <script src="../victoryManager.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

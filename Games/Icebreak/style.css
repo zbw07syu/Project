@@ -37,6 +37,55 @@ h1 { text-align: center; margin: 12px 0; text-shadow: 2px 2px #000; }
   transform: scale(1.05);
   box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
 }
+
+/* Volume Control */
+#volumeControl {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #222;
+  border-radius: 8px;
+}
+
+#volumeControl label {
+  font-family: 'Bangers', cursive;
+  font-size: 20px;
+  color: #000;
+  text-align: center;
+}
+
+#volumeSlider {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.2);
+  outline: none;
+  cursor: pointer;
+}
+
+#volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #5cd0ff;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+#volumeSlider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #5cd0ff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
 #scores { list-style: none; padding: 0; margin: 0; }
 #scores li { background: var(--panel); color: var(--text); padding: 8px; margin-bottom: 6px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 26px; }
 #scores li.current { outline: 3px solid var(--accent); background: #ffd54a; color: #000; font-weight: bold; }

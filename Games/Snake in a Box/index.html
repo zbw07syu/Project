@@ -18,7 +18,10 @@
   <div id="gameContainer">
     <!-- Left Panel -->
     <div id="leftPanel">
-      <button id="muteBtn">Mute/Unmute Music</button>
+      <div id="volumeControl">
+        <label for="volumeSlider">🔊 Music Volume</label>
+        <input type="range" id="volumeSlider" min="0" max="85" value="30">
+      </div>
       <button id="restartBtn">Restart</button>
       <button id="rulesBtn">Rules</button>
     </div>

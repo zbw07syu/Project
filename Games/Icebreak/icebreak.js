@@ -34,7 +34,7 @@
   const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d', { alpha: true }) : null;
   const strobeOverlay = document.getElementById('strobeOverlay');
 
-  const muteBtn = document.getElementById('muteBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
   const restartBtn = document.getElementById('restartBtn');
   const rulesBtn = document.getElementById('rulesBtn');
 
@@ -538,7 +538,7 @@
   }
 
   function tryStartBG() {
-    bgMusic.volume = 0.3;
+    bgMusic.volume = volumeSlider.value / 100;
     bgMusic.play().catch(()=>{});
   }
 
@@ -705,14 +705,15 @@
     if (e.key === 'Enter') checkGuess();
   });
 
-  muteBtn.addEventListener('click', () => {
-    bgMusic.muted = !bgMusic.muted;
-    winSfx.muted = bgMusic.muted; // Also mute/unmute victory music
-    muteBtn.textContent = bgMusic.muted ? 'Unmute Music' : 'Mute Music';
+  // Volume slider handler
+  volumeSlider.addEventListener('input', (e) => {
+    const volume = e.target.value / 100;
+    bgMusic.volume = volume;
+    winSfx.volume = volume;
     
-    // Notify Victory Manager of mute state change
-    if (typeof VictoryManager !== 'undefined') {
-      VictoryManager.updateMuteState(bgMusic.muted);
+    // Notify Victory Manager of volume change
+    if (window.VictoryManager) {
+      window.VictoryManager.setMusicVolume(volume);
     }
   });
 

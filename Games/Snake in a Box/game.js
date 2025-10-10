@@ -14,7 +14,7 @@
   const scoresEl = document.getElementById('scores');
   const bgMusic = document.getElementById('bgMusic');
   const diceSfx = document.getElementById('diceSfx');
-  const muteBtn = document.getElementById('muteBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
   const restartBtn = document.getElementById('restartBtn');
   const rulesBtn = document.getElementById('rulesBtn');
   const teamCountModal = document.getElementById('teamCountModal');
@@ -40,7 +40,6 @@
   let tilesEnabled = false; // Track if tiles can be clicked
   let headFound = false;
   let tailFound = false;
-  let isMuted = false;
   let payload = null; // Question list
   let usedQuestions = new Set();
   
@@ -93,7 +92,13 @@
     });
 
     // Control buttons
-    muteBtn.addEventListener('click', toggleMute);
+    volumeSlider.addEventListener('input', (e) => {
+      const volume = e.target.value / 100;
+      bgMusic.volume = volume;
+      if (typeof VictoryManager !== 'undefined') {
+        VictoryManager.setMusicVolume(volume);
+      }
+    });
     restartBtn.addEventListener('click', () => location.reload());
     rulesBtn.addEventListener('click', () => showModal(rulesPanel));
     closeRules.addEventListener('click', () => hideModal(rulesPanel));
@@ -1332,12 +1337,12 @@
     console.log('VictoryManager available?', typeof VictoryManager !== 'undefined');
     if (typeof VictoryManager !== 'undefined') {
       console.log('Calling VictoryManager.playVictorySequence with:', {
-        getMuteState: () => isMuted,
+        getMuteState: () => false,
         winnerText: winnerText,
         winnerColor: winnerColor
       });
       VictoryManager.playVictorySequence({
-        getMuteState: () => isMuted,
+        getMuteState: () => false,
         winnerText: winnerText,
         winnerColor: winnerColor
       });
@@ -1408,30 +1413,16 @@
   }
 
   function playMusic() {
-    if (!isMuted && bgMusic) {
+    if (bgMusic) {
+      bgMusic.volume = volumeSlider.value / 100;
       bgMusic.play().catch(e => console.log('Audio play failed:', e));
     }
   }
 
   function playSound(audio) {
-    if (!isMuted && audio) {
+    if (audio) {
       audio.currentTime = 0;
       audio.play().catch(e => console.log('Audio play failed:', e));
-    }
-  }
-
-  function toggleMute() {
-    isMuted = !isMuted;
-    
-    // Notify Victory Manager of mute state change
-    if (typeof VictoryManager !== 'undefined') {
-      VictoryManager.updateMuteState(isMuted);
-    }
-    
-    if (isMuted) {
-      bgMusic.pause();
-    } else {
-      bgMusic.play().catch(e => console.log('Audio play failed:', e));
     }
   }
 
