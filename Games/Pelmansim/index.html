@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Memory Madness</title>
+  <title>Memory Mayhem</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- Font: Bangers -->
@@ -13,7 +13,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1 id="gameTitle">Memory Madness</h1>
+  <!-- Background Video -->
+  <video id="bgVideo" autoplay loop muted playsinline>
+    <source src="neural faded loop.mp4" type="video/mp4">
+  </video>
+
+  <h1 id="gameTitle">Memory Mayhem</h1>
 
   <div id="gameContainer">
     <!-- Left Panel -->
@@ -33,7 +38,7 @@
         <div id="cardsGrid"></div>
       </div>
       <div id="messageArea">
-        <div id="instructionDiv" class="messageBox" aria-live="polite">Welcome to Memory Madness!</div>
+        <div id="instructionDiv" class="messageBox" aria-live="polite">Welcome to Memory Mayhem!</div>
         <div id="answerDiv" class="messageBox"></div>
         <div id="controlsDiv" class="messageBox"></div>
       </div>

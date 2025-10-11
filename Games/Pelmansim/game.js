@@ -1,4 +1,4 @@
-// Memory Madness Game Logic
+// Memory Mayhem Game Logic
 (function() {
   'use strict';
 
