@@ -44,6 +44,10 @@
   let payload = null; // Question list
   let usedQuestions = new Set();
   
+  // Vocab mode tracking
+  let isVocabMode = false;
+  let vocabDisplayMode = null; // 'image' or 'definition'
+  
   // AI State
   let numTeams = 2;
   let numHumanTeams = 0;
@@ -83,6 +87,9 @@
     parsePayloadFromHash();
     setupEventListeners();
     
+    // Initialize modal state tracking
+    window.modalState = 'closed';
+    
     // Initialize the multiple choice modal system
     if (window.MultipleChoiceModal) {
       window.MultipleChoiceModal.createModal();
@@ -99,6 +106,9 @@
         const decoded = decodeURIComponent(m[1]);
         const obj = JSON.parse(decoded);
         if (obj && Array.isArray(obj.questions)) {
+          // Check if this is a vocab list
+          isVocabMode = obj.questions.length > 0 && obj.questions[0].type === 'vocab';
+          
           payload = {
             id: obj.id || null,
             name: obj.name || 'Untitled',
@@ -196,10 +206,30 @@
       if (humanTeams.size !== numHumanTeams) return;
       hideModal(teamSelectModal);
       initTeams(numTeams);
-      startGame();
+      
+      // If vocab mode, show vocab mode selector
+      if (isVocabMode) {
+        showVocabModeSelector();
+      } else {
+        startGame();
+      }
     };
 
     showModal(teamSelectModal);
+  }
+
+  function showVocabModeSelector() {
+    const vocabModeModal = document.getElementById('vocabModeModal');
+    showModal(vocabModeModal);
+    
+    // Handle vocab mode selection
+    document.querySelectorAll('.vocab-mode-btn').forEach(btn => {
+      btn.onclick = () => {
+        vocabDisplayMode = btn.getAttribute('data-mode');
+        hideModal(vocabModeModal);
+        startGame();
+      };
+    });
   }
 
   function initTeams(numTeams) {
@@ -1177,18 +1207,87 @@
     const question = questionSource[questionIndex];
     
     console.log('🎯 Selected question:', question);
+    console.log('🎯 Question properties:', {
+      text: question.text,
+      q: question.q,
+      answer: question.answer,
+      a: question.a,
+      correct: question.correct,
+      correctAnswer: question.correctAnswer
+    });
     
     // Determine question type and format
     const questionText = question.text || question.q || 'Question';
     const questionType = question.type || (question.options && question.options.length > 0 ? 'multiple' : 'single');
-    const correctAnswer = question.answer || question.a || '';
+    let correctAnswer = question.answer || question.a || question.correctAnswer || '';
+    
+    // For multiple-choice questions, handle the 'correct' field which contains indexes
+    if (!correctAnswer && question.correct && Array.isArray(question.correct) && question.options) {
+      // 'correct' is an array of indexes pointing to the correct option(s)
+      const correctIndex = question.correct[0];
+      if (typeof correctIndex === 'number' && question.options[correctIndex]) {
+        correctAnswer = question.options[correctIndex];
+      }
+    }
+    
+    // Handle array format for correct answer (fallback)
+    if (Array.isArray(correctAnswer)) {
+      correctAnswer = correctAnswer[0] || '';
+    }
+    
     const turnIndicator = `${team.name} must answer`;
     const imagePath = question.image || null;
     
     console.log('🎯 Question type:', questionType, 'MultipleChoiceModal available:', !!window.MultipleChoiceModal);
+    console.log('🎯 Extracted correct answer:', correctAnswer);
+    
+    // Normalize question type (handle both "multi" and "multiple")
+    const normalizedType = questionType === 'multi' ? 'multiple' : questionType;
     
     // Show question using shared modal system
-    if (questionType === 'multiple' && window.MultipleChoiceModal) {
+    if (normalizedType === 'vocab' && window.MultipleChoiceModal) {
+      // Vocab question - show image or definition, then reveal answer with Close button only
+      let vocabQuestionText = '';
+      let vocabImagePath = null;
+      
+      if (vocabDisplayMode === 'image') {
+        vocabImagePath = question.image;
+        vocabQuestionText = 'What is it?';
+      } else {
+        vocabQuestionText = question.definition + '\n\nWhat is it?';
+      }
+      
+      window.MultipleChoiceModal.showVocabModal(
+        vocabQuestionText,
+        question.word,
+        vocabImagePath,
+        {
+          onCorrect: () => {
+            // This won't be called for Snake in a Box (no scoring)
+          },
+          onIncorrect: () => {
+            // This won't be called for Snake in a Box (no scoring)
+          }
+        },
+        `Team ${currentTeam + 1} must answer!`
+      );
+      
+      // Override the modal to show Close button instead of Correct/Incorrect
+      // This is handled by the showAnswerInModal with showCorrectIncorrect: false
+      const modalContainer = document.getElementById('multipleChoiceModal');
+      const revealBtn = modalContainer.querySelector('.answer-btn');
+      if (revealBtn) {
+        revealBtn.onclick = () => {
+          const answerText = `Answer: ${question.word}`;
+          window.MultipleChoiceModal.showAnswerInModal(answerText, () => {
+            setMessage1(`${team.name} has seen the answer.`);
+            setTimeout(() => startPlayerTurn(), 500);
+          }, {
+            showCorrectIncorrect: false
+          });
+        };
+      }
+    } else if (normalizedType === 'multiple' && window.MultipleChoiceModal) {
       // Multiple choice question
       const options = question.options || [];
       
@@ -1201,11 +1300,14 @@
       }
       
       console.log('🎯 Calling showModal...');
+      console.log('🎯 Correct answer:', correctAnswer);
       window.MultipleChoiceModal.showModal(
         questionText,
         options,
         (selectedOption) => {
+          console.log('🎯 Selected option:', selectedOption, 'Correct answer:', correctAnswer);
           const isCorrect = selectedOption === correctAnswer;
+          console.log('🎯 Is correct?', isCorrect);
           const feedbackMessage = isCorrect 
             ? `Correct! ✓\n\nThe answer is: ${correctAnswer}`
             : `Incorrect. ✗\n\nThe correct answer is: ${correctAnswer}`;
@@ -1224,7 +1326,7 @@
         imagePath,
         turnIndicator
       );
-    } else if (questionType === 'single' && window.MultipleChoiceModal) {
+    } else if (normalizedType === 'single' && window.MultipleChoiceModal) {
       // Open-ended question - show with just a Close button (no scoring)
       const alternates = question.alts || question.alternates || [];
       

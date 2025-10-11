@@ -772,6 +772,95 @@
   }
 
   /**
+   * Show vocab question modal with reveal answer functionality
+   * @param {string} question - The question text (e.g., "What is it?")
+   * @param {string} answer - The vocab word answer
+   * @param {string} imagePath - Optional path to an image to display
+   * @param {object} callbacks - Callback functions
+   * @param {function} callbacks.onCorrect - Called when Correct is clicked
+   * @param {function} callbacks.onIncorrect - Called when Incorrect is clicked
+   * @param {string} teamText - Optional team indicator text (e.g., "Team 1 must answer!")
+   */
+  function showVocabModal(question, answer, imagePath = null, callbacks = {}, teamText = null) {
+    if (!modalContainer) {
+      createMultipleChoiceModal();
+    }
+
+    // Update modal state tracking
+    if (window.modalState !== undefined) {
+      window.modalState = 'opening';
+    }
+
+    // Show team indicator if provided
+    const turnIndicatorEl = modalContainer.querySelector('.mc-modal-turn-indicator');
+    if (teamText) {
+      turnIndicatorEl.textContent = teamText;
+      turnIndicatorEl.classList.add('show');
+    } else {
+      turnIndicatorEl.textContent = '';
+      turnIndicatorEl.classList.remove('show');
+    }
+
+    // Handle image display
+    const imageEl = modalContainer.querySelector('.mc-modal-image');
+    if (imagePath) {
+      imageEl.innerHTML = `<img src="${imagePath}" alt="Vocab image" onerror="this.parentElement.classList.remove('show');">`;
+      imageEl.classList.add('show');
+    } else {
+      imageEl.innerHTML = '';
+      imageEl.classList.remove('show');
+    }
+
+    // Set question text
+    const questionEl = modalContainer.querySelector('.mc-modal-question');
+    questionEl.textContent = question || '';
+
+    // Hide answer section initially
+    const answerEl = modalContainer.querySelector('.mc-modal-answer');
+    if (answerEl) {
+      answerEl.textContent = '';
+      answerEl.classList.remove('show');
+    }
+
+    // Create "Reveal Answer" button
+    const optionsEl = modalContainer.querySelector('.mc-modal-options');
+    optionsEl.innerHTML = '';
+
+    const revealBtn = document.createElement('button');
+    revealBtn.textContent = 'Reveal Answer';
+    revealBtn.className = 'mc-modal-option answer-btn';
+    revealBtn.style.cssText = 'background: linear-gradient(135deg, #4a90e2, #357abd); color: white; font-size: 18px;';
+    
+    revealBtn.addEventListener('click', () => {
+      console.log('🔔 Modal system: Reveal Answer clicked');
+      
+      const answerText = `Answer: ${answer}`;
+      
+      // Show answer in modal with Correct/Incorrect buttons
+      showAnswerInModal(answerText, null, {
+        showCorrectIncorrect: true,
+        onCorrect: callbacks.onCorrect,
+        onIncorrect: callbacks.onIncorrect
+      });
+    });
+
+    optionsEl.appendChild(revealBtn);
+
+    // Show modal
+    modalContainer.classList.add('show');
+
+    // Update modal state to 'open' after transition completes
+    setTimeout(() => {
+      if (window.modalState !== undefined) {
+        window.modalState = 'open';
+      }
+    }, 300);
+
+    // Focus the reveal button
+    setTimeout(() => revealBtn.focus(), 100);
+  }
+
+  /**
    * Display options inline (normal game behavior)
    * @param {HTMLElement} container - Container element to add buttons to
    * @param {string[]} options - Array of option strings
@@ -825,6 +914,7 @@
     shouldUseModal: shouldUseModal,
     showModal: showOptionsModal,
     showOpenAnswerModal: showOpenAnswerModal,
+    showVocabModal: showVocabModal,
     showAnswerInModal: showAnswerInModal,
     showContinuePassModal: showContinuePassModal,
     showInline: showOptionsInline,

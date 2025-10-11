@@ -1590,22 +1590,22 @@
     const isVocab = list && list.listType === 'vocab';
     const isIcebreak = list && list.listType === 'icebreak';
     
-    // For vocab lists, ONLY show Memory Madness
+    // For vocab lists, show Memory Mayhem, Tornado, Snake in a Box, and RunRunRabbit
     if (isVocab) {
-      if (runrunrabbitOption) runrunrabbitOption.style.display = 'none';
-      if (tornadoOption) tornadoOption.style.display = 'none';
-      if (snakeinaboxOption) snakeinaboxOption.style.display = 'none';
+      if (runrunrabbitOption) runrunrabbitOption.style.display = 'flex';
+      if (tornadoOption) tornadoOption.style.display = 'flex';
+      if (snakeinaboxOption) snakeinaboxOption.style.display = 'flex';
       if (truthsandlieOption) truthsandlieOption.style.display = 'none';
       if (icebreakOption) icebreakOption.style.display = 'none';
       if (memoryMadnessOption) memoryMadnessOption.style.display = 'flex';
       
-      // Auto-select Memory Madness for vocab lists
+      // Auto-select Memory Mayhem for vocab lists
       const memoryMadnessRadio = document.querySelector('input[name="gameChoice"][value="memorymadness"]');
       if (memoryMadnessRadio) {
         memoryMadnessRadio.checked = true;
       }
     } else {
-      // For non-vocab lists, show all games except Memory Madness
+      // For non-vocab lists, show all games except Memory Mayhem
       if (runrunrabbitOption) runrunrabbitOption.style.display = 'flex';
       if (tornadoOption) tornadoOption.style.display = 'flex';
       if (snakeinaboxOption) snakeinaboxOption.style.display = 'flex';

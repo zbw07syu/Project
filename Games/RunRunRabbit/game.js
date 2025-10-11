@@ -431,12 +431,35 @@ function showPlayerSelectModal() {
   playerConfirmBtn.onclick = () => {
     if (humanTeams.size !== numHumanTeams) return;
     playerSelectModal.classList.remove('show');
-    // proceed to victory points modal
-    victoryModal.classList.add('show');
+    
+    // If vocab mode, show vocab mode selector first
+    if (isVocabMode) {
+      showVocabModeSelector();
+    } else {
+      // proceed to victory points modal
+      victoryModal.classList.add('show');
+    }
   };
 
   playerSelectModal.classList.add('show');
 }
+
+// Show vocab mode selector modal
+function showVocabModeSelector() {
+  const vocabModeModal = document.getElementById('vocabModeModal');
+  vocabModeModal.classList.add('show');
+  
+  // Handle vocab mode selection
+  document.querySelectorAll('.vocab-mode-btn').forEach(btn => {
+    btn.onclick = () => {
+      vocabDisplayMode = btn.getAttribute('data-mode');
+      vocabModeModal.classList.remove('show');
+      // Now proceed to victory points modal
+      victoryModal.classList.add('show');
+    };
+  });
+}
+
 canvas.width = (gridSize + 1 + 1) * cellSize; // 8 + safety + coord = 10 cells wide
 canvas.height = (gridSize + 1 + 1) * cellSize; // same for height
 
@@ -657,19 +680,26 @@ try {
     const decoded = decodeURIComponent(m[1]);
     const payload = JSON.parse(decoded);
     if (payload && Array.isArray(payload.questions)) {
-      // Normalize into the format expected by game logic
-      questions = payload.questions.map(q => {
-        if (q.type === 'multi') {
-          return {
-            text: q.text || '',
-            answer: Array.isArray(q.correct) && q.options ? q.options.filter((_, i) => q.correct.includes(i)).join(', ') : (q.answer || ''),
-            options: Array.isArray(q.options) ? q.options.slice(0, 4) : [],
-            image: q.image || null
-          };
-        }
-        // single
-        return { text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [], image: q.image || null };
-      }).filter(q => q && q.text);
+      // Check if this is a vocab list
+      if (payload.questions.length > 0 && payload.questions[0].type === 'vocab') {
+        isVocabMode = true;
+        // Keep vocab questions in their original format
+        questions = payload.questions;
+      } else {
+        // Normalize into the format expected by game logic
+        questions = payload.questions.map(q => {
+          if (q.type === 'multi') {
+            return {
+              text: q.text || '',
+              answer: Array.isArray(q.correct) && q.options ? q.options.filter((_, i) => q.correct.includes(i)).join(', ') : (q.answer || ''),
+              options: Array.isArray(q.options) ? q.options.slice(0, 4) : [],
+              image: q.image || null
+            };
+          }
+          // single
+          return { text: q.text || '', answer: q.answer || '', alternates: Array.isArray(q.alternates) ? q.alternates.filter(a => a && a.trim() !== '') : [], image: q.image || null };
+        }).filter(q => q && q.text);
+      }
     }
   }
 } catch (e) {
@@ -682,6 +712,10 @@ let answerRevealed = false;
 let stepsRemaining = 0;
 let currentPlayer = null;
 let [diceQueue] = [];
+
+// Vocab mode tracking
+let isVocabMode = false;
+let vocabDisplayMode = 'image'; // 'image' or 'definition'
 
 let pssHuman 
 let pssResolved = false;
@@ -2628,6 +2662,93 @@ function showNextStep() {
   controlsDiv.innerHTML = ""; // clear previous buttons/messages
   answerShown = false;
 
+  // Handle vocab questions
+  if (currentQuestion.type === 'vocab') {
+    // Initialize modal system if not already done
+    if (window.MultipleChoiceModal) {
+      window.MultipleChoiceModal.createModal();
+    }
+    
+    const currentLoser = losers[currentLoserIndex];
+    const isHumanLoser = (players.find(p => p.name === currentLoser)?.isHuman) || humanTeams.has(currentLoser);
+    
+    // Build vocab question content
+    let vocabQuestionText = '';
+    let vocabImagePath = null;
+    
+    if (vocabDisplayMode === 'image') {
+      vocabImagePath = currentQuestion.image;
+      vocabQuestionText = 'What is it?';
+    } else {
+      vocabQuestionText = currentQuestion.definition + '\n\nWhat is it?';
+    }
+    
+    // Get turn indicator text
+    const turnIndicatorText = `${namesMap[currentLoser] || currentLoser} must answer!`;
+    
+    if (!isHumanLoser) {
+      // AI player - auto-reveal answer after delay
+      const aiDelay = Math.max(200, 800 / (AI_SPEED || 1));
+      console.log('🤖 AI player (vocab) - will auto-reveal answer in', aiDelay, 'ms');
+      
+      setTimeout(() => {
+        if (!answerShown) {
+          answerShown = true;
+          const answerText = `Answer: ${currentQuestion.word}`;
+          
+          if (window.MultipleChoiceModal) {
+            window.MultipleChoiceModal.showAnswerInModal(answerText, () => {
+              showNextOrEnd();
+            }, {
+              showCorrectIncorrect: false
+            });
+          }
+        }
+      }, aiDelay);
+      
+      // Show a simple message for AI (no buttons/modal needed)
+      const aiMsg = document.createElement('div');
+      aiMsg.textContent = '🤖 AI is thinking...';
+      aiMsg.style.cssText = 'padding: 10px; color: #666; font-style: italic;';
+      controlsDiv.appendChild(aiMsg);
+    } else {
+      // Human player - show vocab modal
+      if (window.MultipleChoiceModal) {
+        window.MultipleChoiceModal.showVocabModal(
+          vocabQuestionText,
+          currentQuestion.word,
+          vocabImagePath,
+          {
+            onCorrect: () => {
+              // This won't be called for RunRunRabbit (no scoring)
+            },
+            onIncorrect: () => {
+              // This won't be called for RunRunRabbit (no scoring)
+            }
+          },
+          `Player ${currentPlayer + 1} must answer!`
+        );
+        
+        // Override the reveal button to show Close button instead of Correct/Incorrect
+        const modalContainer = document.getElementById('multipleChoiceModal');
+        const revealBtn = modalContainer.querySelector('.answer-btn');
+        if (revealBtn) {
+          revealBtn.onclick = () => {
+            answerShown = true;
+            const answerText = `Answer: ${currentQuestion.word}`;
+            window.MultipleChoiceModal.showAnswerInModal(answerText, () => {
+              showNextOrEnd();
+            }, {
+              showCorrectIncorrect: false
+            });
+          };
+        }
+      }
+    }
+    
+    return; // Exit early for vocab questions
+  }
+
   const hasOptions = currentQuestion.options && currentQuestion.options.length > 0;
   const isMoreLosers = currentLoserIndex < losers.length - 1; // strictly less than last index
 
@@ -3817,75 +3938,4 @@ function maybeAutoRollIfAI(nextPlayer, retryCount = 0) {
             maybeAutoRollFollowupMove(wrapper);
           }, dAgain);
           aiActionInProgress = false; // Reset flag for roll-again
-          updateCursorForAI();
-          return;
-        }
-
-        // Carrot collection handling (mirror manual click flow)
-        const playerName = wrapper.name;
-        if (carrot && rabbitKeys.includes(playerName) && playerObj.x === carrot.x && playerObj.y === carrot.y) {
-          carrot = null;
-          try { carrotCollectSound.play(); } catch {}
-          switch (playerName) {
-            case 'rabbit': rabbitWins++; break;
-            case 'redRabbit': redRabbitWins++; break;
-            case 'blueRabbit': blueRabbitWins++; break;
-            case 'blackRabbit': blackRabbitWins++; break;
-          }
-          updateScores();
-          const namesMap = getNamesMap();
-          updateMessage(`🐇 ${namesMap[playerName] || playerName} collected a carrot!`);
-          checkMatchWin();
-          // Reset flag BEFORE endMovementPhase so next AI can be scheduled
-          aiActionInProgress = false;
-          updateCursorForAI();
-          endMovementPhase();
-          return;
-        }
-
-        // Draw and evaluate win/catch
-        drawBoard();
-        if (checkWin()) {
-          rollDiceBtn.disabled = true;
-          currentPlayer = null;
-          stepsRemaining = 0;
-          aiActionInProgress = false; // Reset flag on win
-          updateCursorForAI();
-          return;
-        }
-
-        // Clear pending AI player since action completed successfully
-        if (pendingAIPlayer && pendingAIPlayer.name === wrapper.name) {
-          pendingAIPlayer = null;
-        }
-        
-        // Reset flag BEFORE endMovementPhase so next AI can be scheduled immediately
-        aiActionInProgress = false;
-        updateCursorForAI();
-        endMovementPhase();
-      }, 650);
-    }, 600);
-  } catch (e) {
-    console.warn('maybeAutoRollIfAI error:', e);
-    aiActionInProgress = false; // Reset flag on error
-    updateCursorForAI();
-    aiActionScheduled = false; // Reset scheduling flag on error
-    // Clear pending AI player on error
-    if (pendingAIPlayer && pendingAIPlayer.name === wrapper?.name) {
-      pendingAIPlayer = null;
-    }
-    // Try to process any queued actions
-    processAIQueue();
-  }
-}
-
-// Reset all AI state - useful for debugging and error recovery
-function resetAIState() {
-  console.log('🔄 Resetting all AI state');
-  aiActionInProgress = false;
-  updateCursorForAI();
-  aiActionScheduled = false;
-  pendingAIPlayer = null;
-  aiActionQueue = [];
-  lastModalCloseTime = Date.now(); // Reset to current time, not 0
-}
+          u
