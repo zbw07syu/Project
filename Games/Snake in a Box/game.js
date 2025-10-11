@@ -54,6 +54,30 @@
   const teamColors = ['red', 'blue', 'green', 'yellow'];
   const teamNames = ['Team 1', 'Team 2', 'Team 3', 'Team 4'];
 
+  // Default fallback questions (used when no questions loaded from editor)
+  const defaultQuestions = [
+    { type: "multiple", text: "What is the capital of France?", answer: "Paris", options: ["Paris", "London", "Berlin", "Rome"] },
+    { type: "multiple", text: "5 + 7 = ?", answer: "12", options: ["10", "12", "14", "15"] },
+    { type: "multiple", text: "What planet is known as the Red Planet?", answer: "Mars", options: ["Mars", "Venus", "Jupiter", "Saturn"] },
+    { type: "single", text: "What gas do plants breathe in?", answer: "Carbon Dioxide" },
+    { type: "single", text: "Who wrote 'Hamlet'?", answer: "Shakespeare" },
+    { type: "single", text: "What is the largest mammal?", answer: "Blue Whale" },
+    { type: "multiple", text: "What is H2O?", answer: "Water", options: ["Water", "Hydrogen", "Oxygen", "Salt"] },
+    { type: "single", text: "Which ocean is the largest?", answer: "Pacific" },
+    { type: "multiple", text: "What is 9 x 9?", answer: "81", options: ["72", "81", "99", "90"] },
+    { type: "single", text: "Who painted the Mona Lisa?", answer: "Leonardo da Vinci" },
+    { type: "single", text: "What is the tallest mountain?", answer: "Mount Everest" },
+    { type: "multiple", text: "Which continent is Egypt in?", answer: "Africa", options: ["Africa", "Asia", "Europe", "South America"] },
+    { type: "single", text: "What is the fastest land animal?", answer: "Cheetah" },
+    { type: "single", text: "Who discovered gravity?", answer: "Isaac Newton" },
+    { type: "multiple", text: "What is the square root of 144?", answer: "12", options: ["10", "12", "14", "16"] },
+    { type: "multiple", text: "Which planet is closest to the sun?", answer: "Mercury", options: ["Mercury", "Venus", "Earth", "Mars"] },
+    { type: "single", text: "Who wrote '1984'?", answer: "George Orwell" },
+    { type: "single", text: "What is the chemical symbol for gold?", answer: "Au" },
+    { type: "multiple", text: "Which animal is known as King of the Jungle?", answer: "Lion", options: ["Lion", "Tiger", "Elephant", "Giraffe"] },
+    { type: "single", text: "What is the largest desert?", answer: "Sahara" }
+  ];
+
   // Initialize
   function init() {
     parsePayloadFromHash();
@@ -1114,37 +1138,45 @@
       team.roll < min.roll ? team : min
     );
     
+    console.log('🎲 Lowest roll team:', lowestRollTeam.name, 'roll:', lowestRollTeam.roll, 'isAI:', isTeamAI(lowestRollTeam));
+    
     // If the team with lowest roll is human, ask them a question
     if (!isTeamAI(lowestRollTeam)) {
+      console.log('🎲 Human team has lowest roll, will ask question in 2 seconds');
       setTimeout(() => {
         askQuestion(lowestRollTeam);
       }, 2000);
     } else {
       // Lowest roll team is AI, skip question phase
+      console.log('🎲 AI team has lowest roll, skipping question');
       setMessage3(`${lowestRollTeam.name} rolled lowest (${lowestRollTeam.roll}) but is AI - no question asked.`);
       setTimeout(() => startPlayerTurn(), 2000);
     }
   }
 
   function askQuestion(team) {
-    if (!payload || !payload.questions || payload.questions.length === 0) {
-      // No questions available, skip to first player's turn
-      setMessage1(`${team.name} would answer a question, but none are loaded.`);
-      setTimeout(() => startPlayerTurn(), 2000);
-      return;
-    }
+    console.log('🎯 askQuestion called for team:', team.name);
+    
+    // Use payload questions if available, otherwise use default questions
+    const questionSource = (payload && payload.questions && payload.questions.length > 0) 
+      ? payload.questions 
+      : defaultQuestions;
+    
+    console.log('🎯 Question source:', questionSource.length, 'questions available');
     
     // Get unused question
-    const availableQuestions = payload.questions.filter((q, idx) => !usedQuestions.has(idx));
+    const availableQuestions = questionSource.filter((q, idx) => !usedQuestions.has(idx));
     
     if (availableQuestions.length === 0) {
       // All questions used, reset
       usedQuestions.clear();
     }
     
-    const questionIndex = Math.floor(Math.random() * payload.questions.length);
+    const questionIndex = Math.floor(Math.random() * questionSource.length);
     usedQuestions.add(questionIndex);
-    const question = payload.questions[questionIndex];
+    const question = questionSource[questionIndex];
+    
+    console.log('🎯 Selected question:', question);
     
     // Determine question type and format
     const questionText = question.text || question.q || 'Question';
@@ -1153,27 +1185,41 @@
     const turnIndicator = `${team.name} must answer`;
     const imagePath = question.image || null;
     
+    console.log('🎯 Question type:', questionType, 'MultipleChoiceModal available:', !!window.MultipleChoiceModal);
+    
     // Show question using shared modal system
     if (questionType === 'multiple' && window.MultipleChoiceModal) {
       // Multiple choice question
       const options = question.options || [];
       
+      console.log('🎯 Showing multiple choice modal with options:', options);
+      
       // Ensure modal is created
       if (!document.getElementById('multipleChoiceModal')) {
+        console.log('🎯 Creating modal...');
         window.MultipleChoiceModal.createModal();
       }
       
+      console.log('🎯 Calling showModal...');
       window.MultipleChoiceModal.showModal(
         questionText,
         options,
         (selectedOption) => {
           const isCorrect = selectedOption === correctAnswer;
-          if (isCorrect) {
-            setMessage1(`${team.name} answered correctly! ✓`);
-          } else {
-            setMessage1(`${team.name} answered incorrectly. ✗`);
-          }
-          setTimeout(() => startPlayerTurn(), 1500);
+          const feedbackMessage = isCorrect 
+            ? `Correct! ✓\n\nThe answer is: ${correctAnswer}`
+            : `Incorrect. ✗\n\nThe correct answer is: ${correctAnswer}`;
+          
+          // Show feedback in modal with a close button
+          window.MultipleChoiceModal.showAnswerInModal(feedbackMessage, () => {
+            // Update game message after modal closes
+            if (isCorrect) {
+              setMessage1(`${team.name} answered correctly! ✓`);
+            } else {
+              setMessage1(`${team.name} answered incorrectly. ✗`);
+            }
+            setTimeout(() => startPlayerTurn(), 500);
+          });
         },
         imagePath,
         turnIndicator
